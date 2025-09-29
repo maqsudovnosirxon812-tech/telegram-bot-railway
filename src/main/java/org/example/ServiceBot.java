@@ -1,7 +1,6 @@
 package org.example;
 
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -9,7 +8,6 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
-import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 import java.util.*;
 
@@ -58,19 +56,19 @@ public class ServiceBot extends TelegramLongPollingBot {
             default -> {
                 if (text.equalsIgnoreCase(DEFAULT_PROMO)) {
                     promoUsed.put(chatId, true);
-                    sendTextt(chatId, "✅ Promo kod qabul qilindi! Endi hizmatlardan foydalanishingiz mumkin.\nAdminga habar yuborildi.");
+                    sendText(chatId, "✅ Promo kod qabul qilindi! Endi hizmatlardan foydalanishingiz mumkin.\nAdminga habar yuborildi.");
                     String notify = String.format("📩 Promo kod ishlatildi!\nFoydalanuvchi: %s (id=%s)\nUsername: @%s",
                             from.getFirstName(), chatId, (from.getUserName() == null ? "-" : from.getUserName()));
                     AdminBot.notifyAdmin(notify);
                 } else {
-                    sendTextt(chatId, "❌ Men bu buyruqni tushunmadim. Menudan tanlang yoki /start bosing.");
+                    sendText(chatId, "❌ Men bu buyruqni tushunmadim. Menudan tanlang yoki /start bosing.");
                 }
             }
         }
     }
 
     protected void ishtugadi(String chatId) {
-        sendTextt(chatId,"✅ Siz tanlagan hizmat tugallandi. Rahmat!\nKo'proq ma'lumot uchun @toxirovziyodilla");
+        sendText(chatId,"✅ Siz tanlagan hizmat tugallandi. Rahmat!\nKo'proq ma'lumot uchun @toxirovziyodilla");
     }
 
     private void handleStart(String chatId, User from) {
@@ -85,10 +83,15 @@ public class ServiceBot extends TelegramLongPollingBot {
     private ReplyKeyboardMarkup mainKeyboard() {
         ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
         keyboard.setResizeKeyboard(true);
+
         KeyboardRow row1 = new KeyboardRow();
         row1.add(new KeyboardButton("Promo Code"));
         row1.add(new KeyboardButton("Hizmatlar"));
-        keyboard.setKeyboard(List.of(row1));
+
+        KeyboardRow row2 = new KeyboardRow();
+        row2.add(new KeyboardButton("English course")); // yangi tugma
+
+        keyboard.setKeyboard(List.of(row1, row2));
         return keyboard;
     }
 
@@ -105,12 +108,15 @@ public class ServiceBot extends TelegramLongPollingBot {
         r2.add(new KeyboardButton("Loyha ishlari"));
         r2.add(new KeyboardButton("Slayd yasab berish"));
 
-        kb.setKeyboard(Arrays.asList(r1, r2));
+        KeyboardRow r3 = new KeyboardRow();
+        r3.add(new KeyboardButton("⬅ Bosh menuga qaytish")); // back tugma
+
+        kb.setKeyboard(Arrays.asList(r1, r2, r3));
         sendTextWithKeyboard(chatId, text, kb);
     }
 
     private void askPromo(String chatId) {
-        sendTextt(chatId, "🔑 Iltimos, promo kodni kiriting:");
+        sendText(chatId, "🔑 Iltimos, promo kodni kiriting:");
     }
 
     private void handleServiceChoice(String chatId, User from, String service) {
@@ -121,7 +127,7 @@ public class ServiceBot extends TelegramLongPollingBot {
         else
             resp += "\nPromo kod kiritsangiz chegirmaga ega bo'lasiz.";
 
-        sendTextt(chatId, resp);
+        sendText(chatId, resp);
 
         String notify = String.format("📩 Foydalanuvchi: %s\nChatId: %s\nXizmat: %s\nPromo: %s\nUsername: @%s",
                 from.getFirstName(), chatId, service, hasPromo ? "Bor" : "Yo‘q",
@@ -130,7 +136,7 @@ public class ServiceBot extends TelegramLongPollingBot {
         AdminBot.notifyAdmin(notify); // AdminBotga yuborish
     }
 
-    protected void sendTextt(String chatId, String text) {
+    protected void sendText(String chatId, String text) {
         try {
             execute(new SendMessage(chatId, text));
         } catch (Exception e) {
@@ -146,11 +152,5 @@ public class ServiceBot extends TelegramLongPollingBot {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public static void main(String[] args) throws Exception {
-        TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-        botsApi.registerBot(new ServiceBot());
-        System.out.println("✅ ServiceBot ishga tushdi!");
     }
 }

@@ -1,11 +1,9 @@
 package org.example;
 
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,9 +11,14 @@ import java.util.Map;
 public class AdminBot extends TelegramLongPollingBot {
 
     private static AdminBot instance; // singleton
+    private ServiceBot serviceBot;
 
     public AdminBot() {
         instance = this;
+    }
+
+    public void setServiceBot(ServiceBot bot) {
+        this.serviceBot = bot;
     }
 
     public static void notifyAdmin(String text) {
@@ -50,7 +53,7 @@ public class AdminBot extends TelegramLongPollingBot {
         if (text.equals("/start")) {
             sendText(chatId, """
                     Shartlar:
-                    /answered → foydalanuvchiga "ishga tayyor" habarini yuboradi
+                    /answered → foydalanuvchiga 'ishga tayyor' habarini yuboradi
                     /type → foydalanuvchiga ixtiyoriy habar yuborish""");
             return;
         }
@@ -91,11 +94,5 @@ public class AdminBot extends TelegramLongPollingBot {
 
     public void sendTextToAdmin(String text) {
         sendText(ADMIN_CHAT_ID, text);
-    }
-
-    public static void main(String[] args) throws Exception {
-        TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-        botsApi.registerBot(new AdminBot());
-        System.out.println("✅ AdminBot ishga tushdi!");
     }
 }
