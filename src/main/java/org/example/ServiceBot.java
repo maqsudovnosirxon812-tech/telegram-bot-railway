@@ -17,21 +17,26 @@ public class ServiceBot extends TelegramLongPollingBot {
 
     private static final String BOT_TOKEN = "8449488730:AAHa5Q9xH7tXckbGLyO6twT1SB-QnCIHrcQ";
     private static final String BOT_USERNAME = "Konspek1_bot";
-    private static final String ADMIN_CHAT_ID = "6448561095";
-
     private static final String DEFAULT_PROMO = "PROMO2025";
 
     private final Map<String, Boolean> promoUsed = new HashMap<>();
+    private static ServiceBot instance; // static instance for AdminBot
 
-    @Override
-    public String getBotUsername() {
-        return BOT_USERNAME;
+    public ServiceBot() {
+        instance = this;
+    }
+
+    public static void ishtugadiStatic(String chatId) {
+        if (instance != null) {
+            instance.ishtugadi(chatId);
+        }
     }
 
     @Override
-    public String getBotToken() {
-        return BOT_TOKEN;
-    }
+    public String getBotUsername() { return BOT_USERNAME; }
+
+    @Override
+    public String getBotToken() { return BOT_TOKEN; }
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -48,25 +53,24 @@ public class ServiceBot extends TelegramLongPollingBot {
             case "/start","⬅\uFE0F Bosh menuga qaytish" -> handleStart(chatId, from);
             case "Promo Code" -> askPromo(chatId);
             case "Hizmatlar" -> sendServicesMenu(chatId);
-            case "Konspekt yozish", "Uyga vazifa", "Loyha ishlari", "Slayd yasab berish" ->
+            case "English course", "Konspekt yozish", "Uyga vazifa", "Loyha ishlari", "Slayd yasab berish" ->
                     handleServiceChoice(chatId, from, text);
             default -> {
                 if (text.equalsIgnoreCase(DEFAULT_PROMO)) {
                     promoUsed.put(chatId, true);
-                    sendText(chatId, "✅ Promo kod qabul qilindi! Endi hizmatlardan foydalanishingiz mumkin.\nAdminga habar yuborildi.");
+                    sendTextt(chatId, "✅ Promo kod qabul qilindi! Endi hizmatlardan foydalanishingiz mumkin.\nAdminga habar yuborildi.");
                     String notify = String.format("📩 Promo kod ishlatildi!\nFoydalanuvchi: %s (id=%s)\nUsername: @%s",
                             from.getFirstName(), chatId, (from.getUserName() == null ? "-" : from.getUserName()));
-                    sendText(ADMIN_CHAT_ID, notify);
+                    AdminBot.notifyAdmin(notify);
                 } else {
-                    sendText(chatId, "❌ Men bu buyruqni tushunmadim. Menudan tanlang yoki /start bosing.");
+                    sendTextt(chatId, "❌ Men bu buyruqni tushunmadim. Menudan tanlang yoki /start bosing.");
                 }
             }
         }
     }
 
     protected void ishtugadi(String chatId) {
-        sendText(chatId,"✅ Siz tanlagan hizmat tugallandi. Rahmat!\nKo'proq ma'lumot uchun " +
-                "@toxirovziyodilla");
+        sendTextt(chatId,"✅ Siz tanlagan hizmat tugallandi. Rahmat!\nKo'proq ma'lumot uchun @toxirovziyodilla");
     }
 
     private void handleStart(String chatId, User from) {
@@ -81,11 +85,9 @@ public class ServiceBot extends TelegramLongPollingBot {
     private ReplyKeyboardMarkup mainKeyboard() {
         ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
         keyboard.setResizeKeyboard(true);
-
         KeyboardRow row1 = new KeyboardRow();
         row1.add(new KeyboardButton("Promo Code"));
         row1.add(new KeyboardButton("Hizmatlar"));
-
         keyboard.setKeyboard(List.of(row1));
         return keyboard;
     }
@@ -108,7 +110,7 @@ public class ServiceBot extends TelegramLongPollingBot {
     }
 
     private void askPromo(String chatId) {
-        sendText(chatId, "🔑 Iltimos, promo kodni kiriting:");
+        sendTextt(chatId, "🔑 Iltimos, promo kodni kiriting:");
     }
 
     private void handleServiceChoice(String chatId, User from, String service) {
@@ -119,16 +121,16 @@ public class ServiceBot extends TelegramLongPollingBot {
         else
             resp += "\nPromo kod kiritsangiz chegirmaga ega bo'lasiz.";
 
-        sendText(chatId, resp);
+        sendTextt(chatId, resp);
 
         String notify = String.format("📩 Foydalanuvchi: %s\nChatId: %s\nXizmat: %s\nPromo: %s\nUsername: @%s",
                 from.getFirstName(), chatId, service, hasPromo ? "Bor" : "Yo‘q",
                 (from.getUserName() == null ? "-" : from.getUserName()));
 
-        sendText(ADMIN_CHAT_ID, notify);
+        AdminBot.notifyAdmin(notify); // AdminBotga yuborish
     }
 
-    protected void sendText(String chatId, String text) {
+    protected void sendTextt(String chatId, String text) {
         try {
             execute(new SendMessage(chatId, text));
         } catch (Exception e) {
