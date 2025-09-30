@@ -7,10 +7,10 @@ COPY src ./src
 # Build the project (skip tests)
 RUN mvn clean package -DskipTests
 
-# Normalize jar filename so final stage can copy a predictable name
+# Find produced jar (try *-shaded.jar first, then any jar) and copy to predictable name target/app.jar
 RUN set -e; \
     JAR=$(ls target/*-shaded.jar 2>/dev/null || ls target/*.jar 2>/dev/null || true); \
-    if [ -z "$JAR" ]; then echo "No jar found in target/"; exit 1; fi; \
+    if [ -z "$JAR" ]; then echo "No jar found in target/"; ls -la target || true; exit 1; fi; \
     cp "$JAR" target/app.jar
 
 # 2-bosqich: faqat jar ni ishlatish
