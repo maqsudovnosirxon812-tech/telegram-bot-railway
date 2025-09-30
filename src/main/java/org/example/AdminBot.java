@@ -1,5 +1,6 @@
 package org.example;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -9,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AdminBot extends TelegramLongPollingBot {
+    private static final Dotenv dotenv = Dotenv.load();
 
     private static AdminBot instance; // singleton
     private ServiceBot serviceBot;
@@ -26,23 +28,18 @@ public class AdminBot extends TelegramLongPollingBot {
             instance.sendTextToAdmin(text);
         }
     }
-
-    private static final String BOT_TOKEN = "8295381933:AAFgcq71yiksMshiKw11JBc64qE1QAwtOE4";
-    private static final String BOT_USERNAME = "answer812_bot";
-    private static final String ADMIN_CHAT_ID = "6448561095";
+    private static final String BOT_TOKEN = dotenv.get("ADMIN_BOT_TOKEN");
+    private static final String BOT_USERNAME = dotenv.get("ADMIN_BOT_USERNAME");
+    private static final String ADMIN_CHAT_ID = dotenv.get("ADMIN_CHAT_ID");
 
     private final Map<String, Boolean> waitingForType = new HashMap<>();
     private final Map<String, Boolean> waitingForAnswered = new HashMap<>();
 
     @Override
-    public String getBotUsername() {
-        return BOT_USERNAME;
-    }
+    public String getBotUsername() { return BOT_USERNAME; }
 
     @Override
-    public String getBotToken() {
-        return BOT_TOKEN;
-    }
+    public String getBotToken() { return BOT_TOKEN; }
 
     @Override
     public void onUpdateReceived(Update update) {

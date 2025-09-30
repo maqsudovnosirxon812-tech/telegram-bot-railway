@@ -1,5 +1,6 @@
 package org.example;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -12,10 +13,11 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import java.util.*;
 
 public class ServiceBot extends TelegramLongPollingBot {
+    private static final Dotenv dotenv = Dotenv.load();
 
-    private static final String BOT_TOKEN = "8449488730:AAHa5Q9xH7tXckbGLyO6twT1SB-QnCIHrcQ";
-    private static final String BOT_USERNAME = "Konspek1_bot";
-    private static final String DEFAULT_PROMO = "PROMO2025";
+    private static final String BOT_TOKEN = dotenv.get("SERVICE_BOT_TOKEN");
+    private static final String BOT_USERNAME = dotenv.get("SERVICE_BOT_USERNAME");
+    private static final String DEFAULT_PROMO = "SYNOPSIS_2026";
 
     private final Map<String, Boolean> promoUsed = new HashMap<>();
     private static ServiceBot instance; // static instance for AdminBot
@@ -51,8 +53,9 @@ public class ServiceBot extends TelegramLongPollingBot {
             case "/start","⬅\uFE0F Bosh menuga qaytish" -> handleStart(chatId, from);
             case "Promo Code" -> askPromo(chatId);
             case "Hizmatlar" -> sendServicesMenu(chatId);
-            case "English course", "Konspekt yozish", "Uyga vazifa", "Loyha ishlari", "Slayd yasab berish" ->
+            case "Konspekt yozish", "Uyga vazifa", "Loyha ishlari", "Slayd yasab berish" ->
                     handleServiceChoice(chatId, from, text);
+            case "English course"-> englishCourse(chatId);
             default -> {
                 if (text.equalsIgnoreCase(DEFAULT_PROMO)) {
                     promoUsed.put(chatId, true);
@@ -65,6 +68,12 @@ public class ServiceBot extends TelegramLongPollingBot {
                 }
             }
         }
+    }
+
+    private void englishCourse(String chatId) {
+        sendText(chatId,"🇬🇧\"English course\"! Siz uchun qiziq bolsa pastdagi linkga kiring\n" +
+                "👇👇👇👇👇\n" +
+                "@english_course_uz");
     }
 
     protected void ishtugadi(String chatId) {
