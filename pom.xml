@@ -32,7 +32,6 @@
             <version>1.4.14</version>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
@@ -40,33 +39,14 @@
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.4.1</version>
                 <executions>
-                    <!-- Service jar -->
                     <execution>
-                        <id>shade-service</id>
                         <phase>package</phase>
                         <goals><goal>shade</goal></goals>
                         <configuration>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>service</shadedClassifierName>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>org.example.MainService</mainClass>
-                                </transformer>
-                            </transformers>
-                        </configuration>
-                    </execution>
-
-                    <!-- Admin jar -->
-                    <execution>
-                        <id>shade-admin</id>
-                        <phase>package</phase>
-                        <goals><goal>shade</goal></goals>
-                        <configuration>
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>admin</shadedClassifierName>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>org.example.MainAdmin</mainClass>
+                                    <mainClass>org.example.Main</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -75,4 +55,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>
