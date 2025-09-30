@@ -10,8 +10,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AdminBot extends TelegramLongPollingBot {
-    private static final Dotenv dotenv = Dotenv.load();
-
+    private static final Dotenv dotenv =  Dotenv.configure()
+            .filename("/app/.env")
+            .load();
     private static AdminBot instance; // singleton
     private ServiceBot serviceBot;
 
