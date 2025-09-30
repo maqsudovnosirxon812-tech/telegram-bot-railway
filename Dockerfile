@@ -8,13 +8,10 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Normalize jar filename so final stage can copy a predictable name
-# If shade plugin produces *-shaded.jar use it, otherwise take any jar in target
 RUN set -e; \
-    if [ -f target/*-shaded.jar ]; then \
-      cp target/*-shaded.jar target/app.jar; \
-    else \
-      cp target/*.jar target/app.jar; \
-    fi
+    JAR=$(ls target/*-shaded.jar 2>/dev/null || ls target/*.jar 2>/dev/null || true); \
+    if [ -z "$JAR" ]; then echo "No jar found in target/"; exit 1; fi; \
+    cp "$JAR" target/app.jar
 
 # 2-bosqich: faqat jar ni ishlatish
 FROM openjdk:17-jdk-slim
