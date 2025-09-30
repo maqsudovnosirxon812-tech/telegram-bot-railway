@@ -16,8 +16,8 @@ public class ServiceBot extends TelegramLongPollingBot {
     private static final Dotenv dotenv =  Dotenv.configure()
             .filename("/app/.env")
             .load();
-    private static final String BOT_TOKEN = dotenv.get("SERVICE_BOT_TOKEN");
-    private static final String BOT_USERNAME = dotenv.get("SERVICE_BOT_USERNAME");
+    private static final String BOT_TOKEN = System.getenv("SERVICE_BOT_TOKEN");
+    private static final String BOT_USERNAME = System.getenv("SERVICE_BOT_USERNAME");
     private static final String DEFAULT_PROMO = "SYNOPSIS_2026";
 
     private final Map<String, Boolean> promoUsed = new HashMap<>();

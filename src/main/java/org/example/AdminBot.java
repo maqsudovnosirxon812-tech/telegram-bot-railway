@@ -10,9 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AdminBot extends TelegramLongPollingBot {
-    private static final Dotenv dotenv =  Dotenv.configure()
-            .filename("/app/.env")
-            .load();
+
     private static AdminBot instance; // singleton
     private ServiceBot serviceBot;
 
@@ -29,9 +27,9 @@ public class AdminBot extends TelegramLongPollingBot {
             instance.sendTextToAdmin(text);
         }
     }
-    private static final String BOT_TOKEN = dotenv.get("ADMIN_BOT_TOKEN");
-    private static final String BOT_USERNAME = dotenv.get("ADMIN_BOT_USERNAME");
-    private static final String ADMIN_CHAT_ID = dotenv.get("ADMIN_CHAT_ID");
+    private static final String BOT_TOKEN = System.getenv("ADMIN_BOT_TOKEN");
+    private static final String BOT_USERNAME = System.getenv("ADMIN_BOT_USERNAME");
+    private static final String ADMIN_CHAT_ID = System.getenv("ADMIN_CHAT_ID");
 
     private final Map<String, Boolean> waitingForType = new HashMap<>();
     private final Map<String, Boolean> waitingForAnswered = new HashMap<>();
