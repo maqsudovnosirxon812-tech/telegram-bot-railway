@@ -5,8 +5,8 @@ COPY pom.xml .
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-# 2-bosqich: faqat jar ni ishlatish
+# 2-bosqich: faqat shaded jar ni ishlatish
 FROM openjdk:17-jdk-slim
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/target/untitled10-1.0-SNAPSHOT-shaded.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
