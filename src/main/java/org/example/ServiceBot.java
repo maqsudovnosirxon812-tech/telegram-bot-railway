@@ -1,6 +1,5 @@
 package org.example;
 
-import io.github.cdimascio.dotenv.Dotenv;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -13,9 +12,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import java.util.*;
 
 public class ServiceBot extends TelegramLongPollingBot {
-    private static final Dotenv dotenv = Dotenv.load();
-    private static final String BOT_TOKEN = dotenv.get("SERVICE_BOT_TOKEN");
-    private static final String BOT_USERNAME = dotenv.get("SERVICE_BOT_USERNAME");
+    private static final String BOT_TOKEN = System.getenv("SERVICE_BOT_TOKEN");
+    private static final String BOT_USERNAME = System.getenv("SERVICE_BOT_USERNAME");
     private static final String DEFAULT_PROMO = "SYNOPSIS_2026";
 
     private final Map<String, Boolean> promoUsed = new HashMap<>();
@@ -28,12 +26,6 @@ public class ServiceBot extends TelegramLongPollingBot {
     public static void ishtugadiStatic(String chatId) {
         if (instance != null) {
             instance.ishtugadi(chatId);
-        }
-    }
-
-    public static void ishtugadiStatic(String chatId, String text) {
-        if (instance != null) {
-            instance.ishtugadi(chatId, text);
         }
     }
 
@@ -60,7 +52,7 @@ public class ServiceBot extends TelegramLongPollingBot {
             case "Hizmatlar" -> sendServicesMenu(chatId);
             case "Konspekt yozish", "Uyga vazifa", "Loyha ishlari", "Slayd yasab berish" ->
                     handleServiceChoice(chatId, from, text);
-            case "English course" -> englishCourse(chatId);
+            case "English course"-> englishCourse(chatId);
             default -> {
                 if (text.equalsIgnoreCase(DEFAULT_PROMO)) {
                     promoUsed.put(chatId, true);
@@ -76,15 +68,11 @@ public class ServiceBot extends TelegramLongPollingBot {
     }
 
     private void englishCourse(String chatId) {
-        sendText(chatId,"🇬🇧\"English course\"! Siz uchun qiziq bolsa pastdagi linkga kiring\n👇👇👇👇👇\n@english_course_uz");
+        sendText(chatId,"🇬🇧\"English course\"! Siz uchun qiziq bolsa pastdagi linkga kiring\n👇👇👇\n@english_course_uz");
     }
 
     protected void ishtugadi(String chatId) {
         sendText(chatId,"✅ Siz tanlagan hizmat tugallandi. Rahmat!\nKo'proq ma'lumot uchun @toxirovziyodilla");
-    }
-
-    protected void ishtugadi(String chatId, String text) {
-        sendText(chatId, text);
     }
 
     private void handleStart(String chatId, User from) {
