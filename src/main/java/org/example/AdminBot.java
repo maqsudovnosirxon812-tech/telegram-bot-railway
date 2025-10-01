@@ -8,9 +8,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AdminBot extends TelegramLongPollingBot {
-    private static final String BOT_TOKEN = System.getenv("ADMIN_BOT_TOKEN");
-    private static final String BOT_USERNAME = System.getenv("ADMIN_BOT_USERNAME");
-    private static final String ADMIN_CHAT_ID = System.getenv("ADMIN_CHAT_ID");
+    private static final String BOT_TOKEN = Env.get("ADMIN_BOT_TOKEN");
+    private static final String BOT_USERNAME = Env.get("ADMIN_BOT_USERNAME");
+    private static final String ADMIN_CHAT_ID = Env.get("ADMIN_CHAT_ID");
 
     private static AdminBot instance; // singleton
 

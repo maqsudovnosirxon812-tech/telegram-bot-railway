@@ -12,8 +12,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import java.util.*;
 
 public class ServiceBot extends TelegramLongPollingBot {
-    private static final String BOT_TOKEN = System.getenv("SERVICE_BOT_TOKEN");
-    private static final String BOT_USERNAME = System.getenv("SERVICE_BOT_USERNAME");
+    private static final String BOT_TOKEN = Env.get("SERVICE_BOT_TOKEN");
+    private static final String BOT_USERNAME = Env.get("SERVICE_BOT_USERNAME");
     private static final String DEFAULT_PROMO = "SYNOPSIS_2026";
 
     private final Map<String, Boolean> promoUsed = new HashMap<>();
