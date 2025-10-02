@@ -12,12 +12,12 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import java.util.*;
 
 public class ServiceBot extends TelegramLongPollingBot {
-    private static final String BOT_TOKEN = "8449488730:AAHa5Q9xH7tXckbGLyO6twT1SB-QnCIHrcQ";
-    private static final String BOT_USERNAME = "Konspek1_bot";
+    private static final String BOT_TOKEN = System.getenv("SERVICE_BOT_TOKEN");
+    private static final String BOT_USERNAME = System.getenv("SERVICE_BOT_USERNAME");
     private static final String DEFAULT_PROMO = "SYNOPSIS_2026";
 
     private final Map<String, Boolean> promoUsed = new HashMap<>();
-    private static ServiceBot instance; // static instance for AdminBot
+    private static ServiceBot instance;
 
     public ServiceBot() {
         instance = this;
@@ -30,10 +30,14 @@ public class ServiceBot extends TelegramLongPollingBot {
     }
 
     @Override
-    public String getBotUsername() { return BOT_USERNAME; }
+    public String getBotUsername() {
+        return BOT_USERNAME != null ? BOT_USERNAME : "Konspek1_bot";
+    }
 
     @Override
-    public String getBotToken() { return BOT_TOKEN; }
+    public String getBotToken() {
+        return BOT_TOKEN != null ? BOT_TOKEN : "8449488730:AAHa5Q9xH7tXckbGLyO6twT1SB-QnCIHrcQ";
+    }
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -47,7 +51,7 @@ public class ServiceBot extends TelegramLongPollingBot {
         String text = msg.getText();
 
         switch (text) {
-            case "/start","⬅\uFE0F Bosh menuga qaytish" -> handleStart(chatId, from);
+            case "/start","⬅️ Bosh menuga qaytish" -> handleStart(chatId, from);
             case "Promo Code" -> askPromo(chatId);
             case "Hizmatlar" -> sendServicesMenu(chatId);
             case "Konspekt yozish", "Uyga vazifa", "Loyha ishlari", "Slayd yasab berish" ->
@@ -113,7 +117,7 @@ public class ServiceBot extends TelegramLongPollingBot {
         r2.add(new KeyboardButton("Slayd yasab berish"));
 
         KeyboardRow r3 = new KeyboardRow();
-        r3.add(new KeyboardButton("⬅ Bosh menuga qaytish"));
+        r3.add(new KeyboardButton("⬅️ Bosh menuga qaytish"));
 
         kb.setKeyboard(Arrays.asList(r1, r2, r3));
         sendTextWithKeyboard(chatId, text, kb);
@@ -134,7 +138,7 @@ public class ServiceBot extends TelegramLongPollingBot {
         sendText(chatId, resp);
 
         String notify = String.format("📩 Foydalanuvchi: %s\nChatId: %s\nXizmat: %s\nPromo: %s\nUsername: @%s",
-                from.getFirstName(), chatId, service, hasPromo ? "Bor" : "Yo‘q",
+                from.getFirstName(), chatId, service, hasPromo ? "Bor" : "Yo'q",
                 (from.getUserName() == null ? "-" : from.getUserName()));
 
         AdminBot.notifyAdmin(notify);

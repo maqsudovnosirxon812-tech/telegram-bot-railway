@@ -8,11 +8,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AdminBot extends TelegramLongPollingBot {
-    private static final String BOT_TOKEN = "8295381933:AAFgcq71yiksMshiKw11JBc64qE1QAwtOE4";
-    private static final String BOT_USERNAME = "answer812_bot";
-    private static final String ADMIN_CHAT_ID = "6448561095";
+    private static final String BOT_TOKEN = System.getenv("ADMIN_BOT_TOKEN");
+    private static final String BOT_USERNAME = System.getenv("ADMIN_BOT_USERNAME");
+    private static final String ADMIN_CHAT_ID = System.getenv("ADMIN_CHAT_ID");
 
-    private static AdminBot instance; // singleton
+    private static AdminBot instance;
 
     public AdminBot() {
         instance = this;
@@ -28,10 +28,14 @@ public class AdminBot extends TelegramLongPollingBot {
     private final Map<String, Boolean> waitingForAnswered = new HashMap<>();
 
     @Override
-    public String getBotUsername() { return BOT_USERNAME; }
+    public String getBotUsername() {
+        return BOT_USERNAME != null ? BOT_USERNAME : "answer812_bot";
+    }
 
     @Override
-    public String getBotToken() { return BOT_TOKEN; }
+    public String getBotToken() {
+        return BOT_TOKEN != null ? BOT_TOKEN : "8295381933:AAFgcq71yiksMshiKw11JBc64qE1QAwtOE4";
+    }
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -47,7 +51,7 @@ public class AdminBot extends TelegramLongPollingBot {
             return;
         }
 
-        if (!chatId.equals(ADMIN_CHAT_ID)) {
+        if (!chatId.equals(ADMIN_CHAT_ID != null ? ADMIN_CHAT_ID : "6448561095")) {
             sendText(chatId, "❌ Siz admin emassiz.");
             return;
         }
@@ -59,15 +63,14 @@ public class AdminBot extends TelegramLongPollingBot {
             String targetChatId = text;
             waitingForType.put(chatId, false);
             waitingForAnswered.put(chatId, false);
-            sendText(chatId, "✍️ Endi yubormoqchi bo‘lgan matnni kiriting:");
-            waitingForType.put(targetChatId, true); // targetga xabar tayyor
+            sendText(chatId, "✍️ Endi yubormoqchi bo'lgan matnni kiriting:");
+            waitingForType.put(targetChatId, true);
         } else if (waitingForType.containsKey(chatId) && waitingForType.get(chatId)) {
-            // admin matn kirityapti
             String targetChatId = waitingForType.keySet().stream()
                     .filter(id -> !id.equals(chatId))
                     .findFirst().orElse(null);
             if (targetChatId != null) {
-                ServiceBot.ishtugadiStatic(targetChatId); // service bot orqali yuborish
+                ServiceBot.ishtugadiStatic(targetChatId);
                 sendText(chatId, "☑️ Xabar yuborildi: " + targetChatId);
                 waitingForType.put(chatId, false);
             }
@@ -78,7 +81,7 @@ public class AdminBot extends TelegramLongPollingBot {
             sendText(chatId, "✍️ ChatId yozing (masalan: 1234567890):");
         } else if (waitingForAnswered.getOrDefault(chatId, false)) {
             String targetChatId = text;
-            ServiceBot.ishtugadiStatic(targetChatId); // static orqali yuborish
+            ServiceBot.ishtugadiStatic(targetChatId);
             sendText(chatId, "☑️ Habar yuborildi. Endi bemalol uxlashingiz mumkin 😅");
             waitingForAnswered.put(chatId, false);
         }
@@ -93,6 +96,6 @@ public class AdminBot extends TelegramLongPollingBot {
     }
 
     public void sendTextToAdmin(String text) {
-        sendText(ADMIN_CHAT_ID, text);
+        sendText(ADMIN_CHAT_ID != null ? ADMIN_CHAT_ID : "6448561095", text);
     }
 }
