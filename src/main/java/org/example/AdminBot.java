@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 public class AdminBot extends TelegramLongPollingBot {
-    private static final String BOT_TOKEN = "8295381933:AAFgcq71yiksMshiKw11JBc64qE1QAwtOE4";
-    private static final String BOT_USERNAME = "answer812_bot";
+    private static final String BOT_TOKEN = "ADMIN_BOT_TOKEN"; // ← bu yerga admin bot tokenini yoz
+    private static final String BOT_USERNAME = "your_admin_bot";
     private static final String ADMIN_CHAT_ID = "6448561095";
 
     private static AdminBot instance;
@@ -30,37 +30,29 @@ public class AdminBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        if (!update.hasMessage()) return;
+        if (!update.hasMessage() || !update.getMessage().hasText()) return;
+
         String chatId = String.valueOf(update.getMessage().getChatId());
         String text = update.getMessage().getText();
-
-        if (text.equals("/start")) {
-            sendText(chatId, """
-                    Shartlar:
-                    /answered → foydalanuvchiga 'ishga tayyor' habarini yuboradi va DB dan o'chiradi
-                    /type → foydalanuvchiga ixtiyoriy habar yuborish
-                    /show → DB dagi barcha so'rovlarni ko'rsatish""");
-            adminState.put(chatId, AdminState.IDLE);
-            return;
-        }
 
         if (!chatId.equals(ADMIN_CHAT_ID)) {
             sendText(chatId, "❌ Siz admin emassiz.");
             return;
         }
 
-        switch (text.split(" ")[0].toLowerCase()) {
-            case "/type" -> {
-                adminState.put(chatId, AdminState.TYPING_TARGET);
-                sendText(chatId, "✍️ ChatId yozing (masalan: 1234567890) — keyin yubormoqchi bo‘lgan matnni kiriting.");
+        switch (text) {
+            case "/start" -> {
+                sendText(chatId, """
+                        🛠 Admin buyruqlari:
+                        /show — barcha so'rovlarni ko'rish
+                        /type — foydalanuvchiga xabar yuborish
+                        /answered — foydalanuvchining so‘rovini yakunlash""");
+                adminState.put(chatId, AdminState.IDLE);
             }
-            case "/answered" -> {
-                adminState.put(chatId, AdminState.ANSWERING);
-                sendText(chatId, "✍️ ChatId yoki request id yozing:");
-            }
+
             case "/show" -> {
                 List<String> rows = Config.listRequests();
-                if (rows.isEmpty()) sendText(chatId, "Ma'lumot yo'q.");
+                if (rows.isEmpty()) sendText(chatId, "📭 Ma'lumot yo‘q.");
                 else {
                     StringBuilder sb = new StringBuilder();
                     for (String r : rows) {
@@ -73,51 +65,68 @@ public class AdminBot extends TelegramLongPollingBot {
                     if (sb.length() > 0) sendText(chatId, sb.toString());
                 }
             }
-            default -> {
-                AdminState state = adminState.getOrDefault(chatId, AdminState.IDLE);
-                if (state == AdminState.TYPING_TARGET) {
-                    stateTargets.put(chatId, text);
-                    adminState.put(chatId, AdminState.TYPING_TEXT);
-                    sendText(chatId, "✍️ Endi yubormoqchi bo‘lgan matnni kiriting:");
-                } else if (state == AdminState.TYPING_TEXT) {
-                    String targetChat = stateTargets.remove(chatId);
-                    if (targetChat != null) {
-                        try {
-                            new ServiceBot().execute(new SendMessage(targetChat, text));
-                            sendText(chatId, "☑️ Xabar yuborildi: " + targetChat);
-                        } catch (Exception e) { e.printStackTrace(); }
-                    }
-                    adminState.put(chatId, AdminState.IDLE);
-                } else if (state == AdminState.ANSWERING) {
-                    String param = text.trim();
-                    if (param.matches("\\d+")) {
-                        long id = Long.parseLong(param);
-                        boolean deleted = Config.deleteRequestById(id);
-                        if (deleted) {
-                            ServiceBot.ishtugadiStatic(String.valueOf(id));
-                            sendText(chatId, "☑️ Request id=" + id + " o'chirildi va foydalanuvchiga habar yuborildi.");
-                        } else {
-                            Config.deleteRequestsByChatId(id);
-                            ServiceBot.ishtugadiStatic(String.valueOf(id));
-                            sendText(chatId, "☑️ ChatId=" + id + " uchun barcha so‘rovlar o‘chirildi va habar yuborildi.");
-                        }
-                    } else {
-                        sendText(chatId, "Xato: faqat raqamli chatId yoki request id kiriting.");
-                    }
-                    adminState.put(chatId, AdminState.IDLE);
-                } else {
-                    sendText(chatId, "Noma'lum buyruq. /show, /type yoki /answered bering.");
-                }
+
+            case "/type" -> {
+                adminState.put(chatId, AdminState.TYPING_TARGET);
+                sendText(chatId, "✍️ ChatId kiriting (masalan: 1234567890)");
             }
+
+            case "/answered" -> {
+                adminState.put(chatId, AdminState.ANSWERING);
+                sendText(chatId, "✍️ ChatId yoki request id kiriting:");
+            }
+
+            default -> handleText(chatId, text);
         }
     }
 
-    public void sendText(String chatId, String text) {
-        try { execute(new SendMessage(chatId, text)); }
-        catch (Exception e) { e.printStackTrace(); }
+    private void handleText(String chatId, String text) {
+        AdminState state = adminState.getOrDefault(chatId, AdminState.IDLE);
+
+        switch (state) {
+            case TYPING_TARGET -> {
+                stateTargets.put(chatId, text);
+                adminState.put(chatId, AdminState.TYPING_TEXT);
+                sendText(chatId, "✍️ Endi yubormoqchi bo‘lgan matnni kiriting:");
+            }
+
+            case TYPING_TEXT -> {
+                String target = stateTargets.remove(chatId);
+                if (target != null) {
+                    try {
+                        new ServiceBot().execute(new SendMessage(target, text));
+                        sendText(chatId, "✅ Xabar yuborildi: " + target);
+                    } catch (Exception e) {
+                        sendText(chatId, "❌ Xabar yuborishda xatolik!");
+                        e.printStackTrace();
+                    }
+                }
+                adminState.put(chatId, AdminState.IDLE);
+            }
+
+            case ANSWERING -> {
+                if (text.matches("\\d+")) {
+                    long id = Long.parseLong(text);
+                    boolean deleted = Config.deleteRequestById(id);
+                    if (deleted) {
+                        sendText(chatId, "☑️ Request ID=" + id + " o‘chirildi.");
+                        ServiceBot.ishtugadiStatic(String.valueOf(id));
+                    } else {
+                        Config.deleteRequestsByChatId(id);
+                        ServiceBot.ishtugadiStatic(String.valueOf(id));
+                        sendText(chatId, "☑️ ChatId=" + id + " bo‘yicha so‘rovlar o‘chirildi.");
+                    }
+                } else sendText(chatId, "⚠️ Noto‘g‘ri format! Raqam kiriting.");
+                adminState.put(chatId, AdminState.IDLE);
+            }
+
+            default -> sendText(chatId, "Noma'lum buyruq. /show, /type yoki /answered ni sinab ko‘ring.");
+        }
     }
 
-    public void sendTextToAdmin(String text) {
-        sendText(ADMIN_CHAT_ID, text);
+    private void sendText(String chatId, String text) {
+        try { execute(new SendMessage(chatId, text)); } catch (Exception e) { e.printStackTrace(); }
     }
+
+    public void sendTextToAdmin(String text) { sendText(ADMIN_CHAT_ID, text); }
 }
