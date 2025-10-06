@@ -7,7 +7,7 @@ import java.util.List;
 public class Config {
     private static final String DB_URL  = "jdbc:mariadb://localhost:3306/bot_db";
     private static final String DB_USER = "root";          // o'z username'ingni yoz
-    private static final String DB_PASS = "1234";          // o'z parolingni yoz
+    private static final String DB_PASS = "root1234";          // o'z parolingni yoz
 
     private static Connection conn;
 
