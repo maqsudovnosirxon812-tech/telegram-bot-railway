@@ -16,8 +16,15 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 
 import java.util.*;
 
+/**
+ * ServiceBot:
+ * - Konspekt: +2 / -2 tugmalari va tasdiqlash
+ * - Uyga vazifa: fan -> mavzu (DB ga yozadi va adminga yuboradi)
+ * - Loyha ishlari: tavsif (DB ga yozadi va adminga yuboradi)
+ * - Slayd: mavzu -> +2/-2 slayd -> tasdiqlash
+ */
 public class ServiceBot extends TelegramLongPollingBot {
-    private static final String BOT_TOKEN = "YOUR_BOT_TOKEN_HERE";
+    private static final String BOT_TOKEN = "8449488730:AAHa5Q9xH7tXckbGLyO6twT1SB-QnCIHrcQ";
     private static final String BOT_USERNAME = "Konspek1_bot";
     private static final String DEFAULT_PROMO = "SYNOPSIS_2026";
     private static final String BACK_TO_MAIN = "⬅ Bosh menuga qaytish";
@@ -27,15 +34,13 @@ public class ServiceBot extends TelegramLongPollingBot {
     private final Map<String, Integer> pageCount = new HashMap<>();
     private final Map<String, String> lastInlineMessageKey = new HashMap<>();
 
-    @Override
-    public String getBotUsername() {
-        return BOT_USERNAME;
-    }
+    public ServiceBot() { }
 
     @Override
-    public String getBotToken() {
-        return BOT_TOKEN;
-    }
+    public String getBotUsername() { return BOT_USERNAME; }
+
+    @Override
+    public String getBotToken() { return BOT_TOKEN; }
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -45,9 +50,6 @@ public class ServiceBot extends TelegramLongPollingBot {
                 String data = cq.getData();
                 String chatId = String.valueOf(cq.getMessage().getChatId());
                 Integer messageId = cq.getMessage().getMessageId();
-                User user = cq.getFrom();
-                String uname = (user.getUserName() != null) ? "@" + user.getUserName() : user.getFirstName();
-
                 int current = pageCount.getOrDefault(chatId, 2);
 
                 if (data.equals("inc")) {
@@ -62,17 +64,15 @@ public class ServiceBot extends TelegramLongPollingBot {
                     String service = "Konspekt yozish";
                     int pages = pageCount.getOrDefault(chatId, 2);
                     Config.createRequest(Long.parseLong(chatId), service, "Betlar: " + pages);
-                    AdminBot.notifyAdmin("📘 Konspekt\nFoydalanuvchi: " + uname +
-                            "\nChatId: " + chatId + "\nBetlar: " + pages);
-                    sendText(chatId, "✅ Konspekt uchun so'rovingiz qabul qilindi. Adminga yuborildi.");
+                    AdminBot.notifyAdmin("📘 Konspekt\nChatId: " + chatId + "\nBetlar: " + pages);
+                    sendText(chatId, "✅ Konspekt uchun so‘rovingiz adminga yuborildi!");
                     clearState(chatId);
                 } else if (data.equals("confirm_slides")) {
                     String topic = tempAnswers.getOrDefault(chatId, "Mavzu");
                     int slides = pageCount.getOrDefault(chatId, 2);
                     Config.createRequest(Long.parseLong(chatId), "Slayd yasab berish", topic + " | Slaydlar: " + slides);
-                    AdminBot.notifyAdmin("🎞 Slayd\nFoydalanuvchi: " + uname +
-                            "\nChatId: " + chatId + "\nMavzu: " + topic + "\nSlaydlar: " + slides);
-                    sendText(chatId, "✅ Slaydlar bo'yicha so'rovingiz yuborildi. Adminga xabar berildi.");
+                    AdminBot.notifyAdmin("🎞 Slayd\nChatId: " + chatId + "\nMavzu: " + topic + "\nSlaydlar: " + slides);
+                    sendText(chatId, "✅ Slaydlar bo‘yicha so‘rovingiz yuborildi.");
                     clearState(chatId);
                 }
 
@@ -89,7 +89,8 @@ public class ServiceBot extends TelegramLongPollingBot {
             String text = msg.getText().trim();
             String chatId = String.valueOf(msg.getChatId());
             User from = msg.getFrom();
-            String uname = (from.getUserName() != null) ? "@" + from.getUserName() : from.getFirstName();
+
+            String username = (from.getUserName() != null ? "@" + from.getUserName() : from.getFirstName());
 
             Config.upsertUser(msg.getChatId(), from.getUserName(), from.getFirstName());
 
@@ -128,7 +129,7 @@ public class ServiceBot extends TelegramLongPollingBot {
                             sendKonspektInline(chatId);
                             return;
                         } else {
-                            sendText(chatId, "📘 Konspekt holati: iltimos inline tugmalar orqali betlar sonini belgilang yoki /start bosing.");
+                            sendText(chatId, "📘 Betlar sonini inline tugmalar orqali belgilang yoki /start bosing.");
                             return;
                         }
                     }
@@ -142,9 +143,9 @@ public class ServiceBot extends TelegramLongPollingBot {
                             String fan = tempAnswers.remove(chatId);
                             String mavzu = text;
                             Config.createRequest(Long.parseLong(chatId), "Uyga vazifa", fan + " | " + mavzu);
-                            AdminBot.notifyAdmin("📚 Uyga vazifa\nFoydalanuvchi: " + uname +
-                                    "\nChatId: " + chatId + "\nFan: " + fan + "\nMavzu: " + mavzu);
-                            sendText(chatId, "✅ Uyga vazifa yuborildi. Adminga xabar berildi.");
+                            AdminBot.notifyAdmin("📚 Uyga vazifa\nChatId: " + chatId + "\nUsername: " + username +
+                                    "\nFan: " + fan + "\nMavzu: " + mavzu);
+                            sendText(chatId, "✅ Uyga vazifa yuborildi.\nAdminga xabar berildi.\n👤 Username: " + username);
                             selectedService.remove(chatId);
                             return;
                         }
@@ -152,9 +153,9 @@ public class ServiceBot extends TelegramLongPollingBot {
 
                     case "Loyha ishlari" -> {
                         Config.createRequest(Long.parseLong(chatId), "Loyha ishlari", text);
-                        AdminBot.notifyAdmin("🧩 Loyha ishlari\nFoydalanuvchi: " + uname +
-                                "\nChatId: " + chatId + "\nTavsif: " + text);
-                        sendText(chatId, "✅ Loyha ma'lumoti yuborildi. Adminga xabar berildi.");
+                        AdminBot.notifyAdmin("🧩 Loyha ishlari\nChatId: " + chatId + "\nUsername: " + username +
+                                "\nTavsif: " + text);
+                        sendText(chatId, "✅ Loyha ma’lumoti yuborildi.\n👤 Username: " + username);
                         selectedService.remove(chatId);
                         return;
                     }
@@ -166,7 +167,7 @@ public class ServiceBot extends TelegramLongPollingBot {
                             sendSlidesInline(chatId, text);
                             return;
                         } else {
-                            sendText(chatId, "🎞 Slayd holati: iltimos inline tugmalar orqali slayd sonini belgilang yoki /start bosing.");
+                            sendText(chatId, "🎞 Slayd holati: inline tugmalar orqali slayd sonini belgilang yoki /start bosing.");
                             return;
                         }
                     }
@@ -177,28 +178,28 @@ public class ServiceBot extends TelegramLongPollingBot {
                 case "Konspekt yozish" -> {
                     selectedService.put(chatId, "Konspekt yozish");
                     pageCount.put(chatId, 2);
+                    sendText(chatId, "📘 Siz Konspekt yozish xizmatini tanladingiz.\n👤 Username: " + username + "\nID: " + chatId);
                     sendKonspektInline(chatId);
                 }
                 case "Uyga vazifa" -> {
                     selectedService.put(chatId, "Uyga vazifa");
                     tempAnswers.remove(chatId);
-                    sendText(chatId, "✍️ Qaysi fan uchun uyga vazifa kerak?");
+                    sendText(chatId, "✍️ Qaysi fan uchun uyga vazifa kerak?\n👤 Username: " + username + "\nID: " + chatId);
                 }
                 case "Loyha ishlari" -> {
                     selectedService.put(chatId, "Loyha ishlari");
-                    sendText(chatId, "🧩 Loyha haqida qisqacha yozing:");
+                    sendText(chatId, "🧩 Loyha haqida qisqacha yozing.\n👤 Username: " + username + "\nID: " + chatId);
                 }
                 case "Slayd yasab berish" -> {
                     selectedService.put(chatId, "Slayd yasab berish");
                     tempAnswers.remove(chatId);
-                    sendText(chatId, "📑 Qaysi mavzu uchun slayd kerak? Iltimos mavzuni yozing:");
+                    sendText(chatId, "📑 Qaysi mavzu uchun slayd kerak?\n👤 Username: " + username + "\nID: " + chatId);
                 }
                 default -> {
                     if (text.equalsIgnoreCase(DEFAULT_PROMO)) {
                         Config.setPromoUsed(msg.getChatId(), true);
                         sendText(chatId, "✅ Promo kod qabul qilindi! Adminga habar yuborildi.");
-                        AdminBot.notifyAdmin("📩 Promo ishlatildi!\nFoydalanuvchi: " + uname +
-                                "\nChatId: " + chatId);
+                        AdminBot.notifyAdmin("📩 Promo ishlatildi!\nFoydalanuvchi: " + from.getFirstName() + " id=" + chatId);
                     } else {
                         sendText(chatId, "❌ Men bu buyruqni tushunmadim. Menudan tanlang yoki /start bosing.");
                     }
@@ -215,7 +216,7 @@ public class ServiceBot extends TelegramLongPollingBot {
             edit.setChatId(chatId);
             edit.setMessageId(messageId);
             edit.setText("📄 Betlar soni: " + current);
-            edit.setReplyMarkup(buildInlineMarkup(current));
+            edit.setReplyMarkup(buildInlineMarkup(current, true));
             execute(edit);
         } catch (Exception e) {
             e.printStackTrace();
@@ -224,19 +225,28 @@ public class ServiceBot extends TelegramLongPollingBot {
 
     private void sendKonspektInline(String chatId) {
         int current = pageCount.getOrDefault(chatId, 2);
-        SendMessage sm = new SendMessage(chatId, "📘 Siz 'Konspekt yozish' xizmatini tanladingiz.\nNechta bet kerak?");
-        sm.setReplyMarkup(buildInlineMarkup(current));
+        SendMessage sm = new SendMessage(chatId, "📘 Nechta bet kerak? (juft sonlarda ishlaydi)");
+        sm.setReplyMarkup(buildInlineMarkup(current, false));
         try { execute(sm); } catch (Exception e) { e.printStackTrace(); }
     }
 
     private void sendSlidesInline(String chatId, String topic) {
         int current = pageCount.getOrDefault(chatId, 2);
         SendMessage sm = new SendMessage(chatId, "🎞 Mavzu: " + topic + "\nNechta slayd kerak?");
-        sm.setReplyMarkup(buildInlineMarkup(current));
+        sm.setReplyMarkup(buildInlineMarkup(current, false));
         try { execute(sm); } catch (Exception e) { e.printStackTrace(); }
     }
 
-    private InlineKeyboardMarkup buildInlineMarkup(int current) {
+    public static void ishtugadiStatic(String chatId) {
+        try {
+            ServiceBot bot = new ServiceBot();
+            bot.execute(new SendMessage(chatId, "✅ So‘rovingiz yakunlandi. Ish tayyor!"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private InlineKeyboardMarkup buildInlineMarkup(int current, boolean includeConfirmOnly) {
         InlineKeyboardButton minus = new InlineKeyboardButton("-2");
         minus.setCallbackData("dec");
 
@@ -251,11 +261,8 @@ public class ServiceBot extends TelegramLongPollingBot {
 
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         rows.add(Arrays.asList(minus, plus));
-        rows.add(Arrays.asList(confirmK, confirmS));
-
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        markup.setKeyboard(rows);
-        return markup;
+        rows.add(Collections.singletonList(confirmK));
+        return new InlineKeyboardMarkup(rows);
     }
 
     private void clearState(String chatId) {
