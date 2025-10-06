@@ -4,15 +4,14 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AdminBot extends TelegramLongPollingBot {
-    private static final String BOT_TOKEN = "8295381933:AAFgcq71yiksMshiKw11JBc64qE1QAwtOE4"; // ← bu yerga admin bot tokenini yoz
+    private static final String BOT_TOKEN = "8295381933:AAFgcq71yiksMshiKw11JBc64qE1QAwtOE4";
     private static final String BOT_USERNAME = "answer812_bot";
-    private static final String ADMIN_CHAT_ID = "6448561095";
-    private static final String ADMIN_CHAT_ID_TWO = "7878964299";
+
+    // 🔹 Bir nechta adminlarni shu ro‘yxatga qo‘shish mumkin
+    private static final List<String> ADMINS = List.of("6448561095", "7878964299");
 
     private static AdminBot instance;
     private final Map<String, AdminState> adminState = new HashMap<>();
@@ -23,11 +22,18 @@ public class AdminBot extends TelegramLongPollingBot {
     public AdminBot() { instance = this; }
 
     public static void notifyAdmin(String text) {
-        if (instance != null) instance.sendTextToAdmin(text);
+        if (instance != null) instance.sendTextToAdmins(text);
     }
 
-    @Override public String getBotUsername() { return BOT_USERNAME; }
-    @Override public String getBotToken() { return BOT_TOKEN; }
+    @Override
+    public String getBotUsername() { return BOT_USERNAME; }
+
+    @Override
+    public String getBotToken() { return BOT_TOKEN; }
+
+    private boolean isAdmin(String chatId) {
+        return ADMINS.contains(chatId);
+    }
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -36,7 +42,8 @@ public class AdminBot extends TelegramLongPollingBot {
         String chatId = String.valueOf(update.getMessage().getChatId());
         String text = update.getMessage().getText();
 
-        if (!chatId.equals(ADMIN_CHAT_ID)|| !chatId.equals(ADMIN_CHAT_ID_TWO)) {
+        // 🔹 Adminlikni tekshirish
+        if (!isAdmin(chatId)) {
             sendText(chatId, "❌ Siz admin emassiz.");
             return;
         }
@@ -74,7 +81,7 @@ public class AdminBot extends TelegramLongPollingBot {
 
             case "/answered" -> {
                 adminState.put(chatId, AdminState.ANSWERING);
-                sendText(chatId, "✍️ ChatId yoki request id kiriting:");
+                sendText(chatId, "✍️ ChatId yoki request ID kiriting:");
             }
 
             default -> handleText(chatId, text);
@@ -129,5 +136,10 @@ public class AdminBot extends TelegramLongPollingBot {
         try { execute(new SendMessage(chatId, text)); } catch (Exception e) { e.printStackTrace(); }
     }
 
-    public void sendTextToAdmin(String text) { sendText(ADMIN_CHAT_ID, text); }
+    // 🔹 Endi barcha adminlarga yuboradi
+    public void sendTextToAdmins(String text) {
+        for (String adminId : ADMINS) {
+            sendText(adminId, text);
+        }
+    }
 }
