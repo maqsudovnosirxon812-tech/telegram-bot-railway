@@ -51,6 +51,9 @@ public class ServiceBot extends TelegramLongPollingBot {
                 String chatId = String.valueOf(cq.getMessage().getChatId());
                 Integer messageId = cq.getMessage().getMessageId();
                 int current = pageCount.getOrDefault(chatId, 2);
+                User user = cq.getFrom();
+                String firstName = user.getFirstName();
+                String username = (user.getUserName() != null ? "@" + user.getUserName() : "—");
 
                 if (data.equals("inc")) {
                     current += 2;
@@ -64,14 +67,30 @@ public class ServiceBot extends TelegramLongPollingBot {
                     String service = "Konspekt yozish";
                     int pages = pageCount.getOrDefault(chatId, 2);
                     Config.createRequest(Long.parseLong(chatId), service, "Betlar: " + pages);
-                    AdminBot.notifyAdmin("📘 Konspekt\nChatId: " + chatId + "\nBetlar: " + pages);
+
+                    String msgToAdmin = "📘 *Konspekt so‘rovi*\n"
+                            + "👤 Ism: " + firstName + "\n"
+                            + "🔗 Username: " + username + "\n"
+                            + "💬 ChatId: " + chatId + "\n"
+                            + "📄 Betlar: " + pages;
+                    AdminBot.notifyAdmin(msgToAdmin);
+
                     sendText(chatId, "✅ Konspekt uchun so‘rovingiz adminga yuborildi!");
                     clearState(chatId);
+
                 } else if (data.equals("confirm_slides")) {
                     String topic = tempAnswers.getOrDefault(chatId, "Mavzu");
                     int slides = pageCount.getOrDefault(chatId, 2);
                     Config.createRequest(Long.parseLong(chatId), "Slayd yasab berish", topic + " | Slaydlar: " + slides);
-                    AdminBot.notifyAdmin("🎞 Slayd\nChatId: " + chatId + "\nMavzu: " + topic + "\nSlaydlar: " + slides);
+
+                    String msgToAdmin = "🎞 *Slayd so‘rovi*\n"
+                            + "👤 Ism: " + firstName + "\n"
+                            + "🔗 Username: " + username + "\n"
+                            + "💬 ChatId: " + chatId + "\n"
+                            + "🧾 Mavzu: " + topic + "\n"
+                            + "📊 Slaydlar: " + slides;
+                    AdminBot.notifyAdmin(msgToAdmin);
+
                     sendText(chatId, "✅ Slaydlar bo‘yicha so‘rovingiz yuborildi.");
                     clearState(chatId);
                 }
@@ -143,8 +162,12 @@ public class ServiceBot extends TelegramLongPollingBot {
                             String fan = tempAnswers.remove(chatId);
                             String mavzu = text;
                             Config.createRequest(Long.parseLong(chatId), "Uyga vazifa", fan + " | " + mavzu);
-                            AdminBot.notifyAdmin("📚 Uyga vazifa\nChatId: " + chatId + "\nUsername: " + username +
-                                    "\nFan: " + fan + "\nMavzu: " + mavzu);
+                            AdminBot.notifyAdmin("📚 Uyga vazifa\n"
+                                    + "👤 Ism: " + from.getFirstName() + "\n"
+                                    + "🔗 Username: " + username + "\n"
+                                    + "💬 ChatId: " + chatId + "\n"
+                                    + "📘 Fan: " + fan + "\n"
+                                    + "🧾 Mavzu: " + mavzu);
                             sendText(chatId, "✅ Uyga vazifa yuborildi.\nAdminga xabar berildi.\n👤 Username: " + username);
                             selectedService.remove(chatId);
                             return;
@@ -153,8 +176,11 @@ public class ServiceBot extends TelegramLongPollingBot {
 
                     case "Loyha ishlari" -> {
                         Config.createRequest(Long.parseLong(chatId), "Loyha ishlari", text);
-                        AdminBot.notifyAdmin("🧩 Loyha ishlari\nChatId: " + chatId + "\nUsername: " + username +
-                                "\nTavsif: " + text);
+                        AdminBot.notifyAdmin("🧩 Loyha ishlari\n"
+                                + "👤 Ism: " + from.getFirstName() + "\n"
+                                + "🔗 Username: " + username + "\n"
+                                + "💬 ChatId: " + chatId + "\n"
+                                + "📄 Tavsif: " + text);
                         sendText(chatId, "✅ Loyha ma’lumoti yuborildi.\n👤 Username: " + username);
                         selectedService.remove(chatId);
                         return;
@@ -178,22 +204,22 @@ public class ServiceBot extends TelegramLongPollingBot {
                 case "Konspekt yozish" -> {
                     selectedService.put(chatId, "Konspekt yozish");
                     pageCount.put(chatId, 2);
-                    sendText(chatId, "📘 Siz Konspekt yozish xizmatini tanladingiz.\n👤 Username: " + username + "\nID: " + chatId);
+                    sendText(chatId, "📘 Siz Konspekt yozish xizmatini tanladingiz.\n👤 Username: " + username);
                     sendKonspektInline(chatId);
                 }
                 case "Uyga vazifa" -> {
                     selectedService.put(chatId, "Uyga vazifa");
                     tempAnswers.remove(chatId);
-                    sendText(chatId, "✍️ Qaysi fan uchun uyga vazifa kerak?\n👤 Username: " + username + "\nID: " + chatId);
+                    sendText(chatId, "✍️ Qaysi fan uchun uyga vazifa kerak?\n👤 Username: " + username);
                 }
                 case "Loyha ishlari" -> {
                     selectedService.put(chatId, "Loyha ishlari");
-                    sendText(chatId, "🧩 Loyha haqida qisqacha yozing.\n👤 Username: " + username + "\nID: " + chatId);
+                    sendText(chatId, "🧩 Loyha haqida qisqacha yozing.\n👤 Username: " + username);
                 }
                 case "Slayd yasab berish" -> {
                     selectedService.put(chatId, "Slayd yasab berish");
                     tempAnswers.remove(chatId);
-                    sendText(chatId, "📑 Qaysi mavzu uchun slayd kerak?\n👤 Username: " + username + "\nID: " + chatId);
+                    sendText(chatId, "📑 Qaysi mavzu uchun slayd kerak?\n👤 Username: " + username);
                 }
                 default -> {
                     if (text.equalsIgnoreCase(DEFAULT_PROMO)) {
@@ -261,7 +287,7 @@ public class ServiceBot extends TelegramLongPollingBot {
 
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         rows.add(Arrays.asList(minus, plus));
-        rows.add(Collections.singletonList(confirmK));
+        rows.add(Arrays.asList(confirmK, confirmS));
         return new InlineKeyboardMarkup(rows);
     }
 
