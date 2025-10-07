@@ -5,22 +5,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Config {
-    private static final String DB_URL  = "jdbc:mariadb://localhost:3306/bot_db";
+
+    private static final String DB_URL  = "jdbc:mariadb://crossover.proxy.rlwy.net:34517/railway";
     private static final String DB_USER = "root";
-    private static final String DB_PASS = "root1234";
+    private static final String DB_PASS = "qCHzPQxwnkbrrTlZEGDIeIxxuLCbNdpr";
 
     private static Connection conn;
 
     static {
         try {
             conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-            System.out.println("✅ Database connected (MariaDB)!");
+            System.out.println("✅ Database connected to Railway (MariaDB/MySQL)!");
         } catch (SQLException e) {
             System.err.println("❌ Database ulanishda xatolik: " + e.getMessage());
         }
     }
 
-    // 🔹 Foydalanuvchini qo'shish yoki yangilash
+    // 🔹 Foydalanuvchini qo‘shish yoki yangilash
     public static void upsertUser(long chatId, String username, String firstname) {
         String sql = """
                 INSERT INTO users (chat_id, username, firstname)
