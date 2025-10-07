@@ -11,7 +11,7 @@ public class AdminBot extends TelegramLongPollingBot {
     private static final String BOT_USERNAME = "answer812_bot";
 
     // 🔹 Bir nechta adminlarni shu ro‘yxatga qo‘shish mumkin
-    private static final List<String> ADMINS = List.of("6448561095", "7878964299");
+    private static final List<String> ADMINS = List.of("6448561095", "5150677380");
 
     private static AdminBot instance;
     private final Map<String, AdminState> adminState = new HashMap<>();
