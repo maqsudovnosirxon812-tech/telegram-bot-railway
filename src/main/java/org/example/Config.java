@@ -6,8 +6,8 @@ import java.util.List;
 
 public class Config {
 
-    // ✅ MySQL Railway konfiguratsiyasi
-    private static final String DB_URL  = "jdbc:mysql://shinkansen.proxy.rlwy.net:44343/railway?useSSL=true&serverTimezone=UTC";
+    // ✅ MariaDB Railway konfiguratsiyasi
+    private static final String DB_URL  = "jdbc:mariadb://shinkansen.proxy.rlwy.net:44343/railway";
     private static final String DB_USER = "root";
     private static final String DB_PASS = "YGYGxcMgwgAtbeQvzHGORzdigwoOIPiM";
 
@@ -15,8 +15,9 @@ public class Config {
 
     static {
         try {
+            // MariaDB bilan ulanish
             conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-            System.out.println("✅ Database connected to Railway (MySQL)!");
+            System.out.println("✅ Database connected to Railway (MariaDB)!");
 
             // Jadval mavjudligini tekshirish va kerak bo‘lsa yaratish
             createTablesIfNotExists();
