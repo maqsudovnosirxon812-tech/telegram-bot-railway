@@ -6,18 +6,54 @@ import java.util.List;
 
 public class Config {
 
-    private static final String DB_URL  = "jdbc:mariadb://crossover.proxy.rlwy.net:34517/railway";
+    // ✅ MySQL Railway konfiguratsiyasi
+    private static final String DB_URL  = "jdbc:mysql://shinkansen.proxy.rlwy.net:44343/railway?useSSL=true&serverTimezone=UTC";
     private static final String DB_USER = "root";
-    private static final String DB_PASS = "qCHzPQxwnkbrrTlZEGDIeIxxuLCbNdpr";
+    private static final String DB_PASS = "YGYGxcMgwgAtbeQvzHGORzdigwoOIPiM";
 
     private static Connection conn;
 
     static {
         try {
             conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-            System.out.println("✅ Database connected to Railway (MariaDB/MySQL)!");
+            System.out.println("✅ Database connected to Railway (MySQL)!");
+
+            // Jadval mavjudligini tekshirish va kerak bo‘lsa yaratish
+            createTablesIfNotExists();
+
         } catch (SQLException e) {
             System.err.println("❌ Database ulanishda xatolik: " + e.getMessage());
+        }
+    }
+
+    // 🔹 Agar "users" va "requests" jadvallari yo‘q bo‘lsa — yaratadi
+    private static void createTablesIfNotExists() {
+        String createUsersTable = """
+                CREATE TABLE IF NOT EXISTS users (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    chat_id BIGINT UNIQUE NOT NULL,
+                    username VARCHAR(255),
+                    firstname VARCHAR(255),
+                    promo_used BOOLEAN DEFAULT FALSE
+                )
+                """;
+
+        String createRequestsTable = """
+                CREATE TABLE IF NOT EXISTS requests (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    chat_id BIGINT NOT NULL,
+                    service VARCHAR(255) NOT NULL,
+                    extra TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+                """;
+
+        try (Statement st = conn.createStatement()) {
+            st.executeUpdate(createUsersTable);
+            st.executeUpdate(createRequestsTable);
+            System.out.println("📦 Jadval(lar) tekshirildi va kerak bo‘lsa yaratildi!");
+        } catch (SQLException e) {
+            System.err.println("⚠️ createTablesIfNotExists() xatolik: " + e.getMessage());
         }
     }
 
