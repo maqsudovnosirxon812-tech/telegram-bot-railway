@@ -6,27 +6,27 @@ import java.util.List;
 
 public class Config {
 
-    // ✅ Ichki Railway MySQL konfiguratsiyasi
-    private static final String DB_URL  = "jdbc:mysql://mysql-xngo.railway.internal:3306/railway?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
+    // ✅ Railway MySQL konfiguratsiyasi (INTERNAL)
+    private static final String DB_URL  = "jdbc:mysql://mysql.railway.internal:3306/railway?useSSL=false&serverTimezone=UTC";
     private static final String DB_USER = "root";
-    private static final String DB_PASS = "YGYGxcMgwgAtbeQvzHGORzdigwoOIPiM";
+    private static final String DB_PASS = "IaFHSQzfymARUiHWrCKugcWyXGwbxHgP";
 
     private static Connection conn;
 
     static {
         try {
             conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-            System.out.println("✅ Database connected to Railway (internal MySQL)!");
+            System.out.println("✅ Database connected to Railway (MySQL)!");
 
-            // Jadval mavjudligini tekshirish va kerak bo‘lsa yaratish
-            createTablesIfNotExists();
+            createTablesIfNotExists(); // Jadval yo‘q bo‘lsa, yaratadi
 
         } catch (SQLException e) {
             System.err.println("❌ Database ulanishda xatolik: " + e.getMessage());
+            e.printStackTrace(); // 👉 To‘liq stack trace chiqaradi
         }
     }
 
-    // 🔹 Jadval yaratish agar yo‘q bo‘lsa
+    // 🔹 Agar jadval yo‘q bo‘lsa — yaratish
     private static void createTablesIfNotExists() {
         String createUsersTable = """
                 CREATE TABLE IF NOT EXISTS users (
@@ -54,6 +54,7 @@ public class Config {
             System.out.println("📦 Jadval(lar) tekshirildi va kerak bo‘lsa yaratildi!");
         } catch (SQLException e) {
             System.err.println("⚠️ createTablesIfNotExists() xatolik: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -72,6 +73,7 @@ public class Config {
             ps.executeUpdate();
         } catch (SQLException e) {
             System.err.println("⚠️ upsertUser() xatolik: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -85,6 +87,7 @@ public class Config {
             }
         } catch (SQLException e) {
             System.err.println("⚠️ isPromoUsed() xatolik: " + e.getMessage());
+            e.printStackTrace();
         }
         return false;
     }
@@ -98,6 +101,7 @@ public class Config {
             ps.executeUpdate();
         } catch (SQLException e) {
             System.err.println("⚠️ setPromoUsed() xatolik: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -111,6 +115,7 @@ public class Config {
             ps.executeUpdate();
         } catch (SQLException e) {
             System.err.println("⚠️ createRequest() xatolik: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -131,6 +136,7 @@ public class Config {
             }
         } catch (SQLException e) {
             System.err.println("⚠️ listRequests() xatolik: " + e.getMessage());
+            e.printStackTrace();
         }
         return list;
     }
@@ -143,6 +149,7 @@ public class Config {
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("⚠️ deleteRequestById() xatolik: " + e.getMessage());
+            e.printStackTrace();
         }
         return false;
     }
@@ -155,6 +162,7 @@ public class Config {
             ps.executeUpdate();
         } catch (SQLException e) {
             System.err.println("⚠️ deleteRequestsByChatId() xatolik: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }
