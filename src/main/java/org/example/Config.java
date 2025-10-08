@@ -6,8 +6,8 @@ import java.util.List;
 
 public class Config {
 
-    // ✅ MariaDB Railway konfiguratsiyasi
-    private static final String DB_URL  = "jdbc:mariadb://shinkansen.proxy.rlwy.net:44343/railway";
+    // ✅ Ichki Railway MySQL konfiguratsiyasi
+    private static final String DB_URL  = "jdbc:mysql://mysql-xngo.railway.internal:3306/railway?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
     private static final String DB_USER = "root";
     private static final String DB_PASS = "YGYGxcMgwgAtbeQvzHGORzdigwoOIPiM";
 
@@ -15,9 +15,8 @@ public class Config {
 
     static {
         try {
-            // MariaDB bilan ulanish
             conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-            System.out.println("✅ Database connected to Railway (MariaDB)!");
+            System.out.println("✅ Database connected to Railway (internal MySQL)!");
 
             // Jadval mavjudligini tekshirish va kerak bo‘lsa yaratish
             createTablesIfNotExists();
@@ -27,7 +26,7 @@ public class Config {
         }
     }
 
-    // 🔹 Agar "users" va "requests" jadvallari yo‘q bo‘lsa — yaratadi
+    // 🔹 Jadval yaratish agar yo‘q bo‘lsa
     private static void createTablesIfNotExists() {
         String createUsersTable = """
                 CREATE TABLE IF NOT EXISTS users (
