@@ -5,56 +5,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Config {
-
-    // ✅ Railway MySQL konfiguratsiyasi (INTERNAL)
-    private static final String DB_URL  = "jdbc:mysql://mysql.railway.internal:3306/railway?useSSL=false&serverTimezone=UTC";
+    // 🔹 Railway ma’lumotlari
+    private static final String DB_URL  = "jdbc:mysql://centerbeam.proxy.rlwy.net:57920/railway?useSSL=false&serverTimezone=UTC";
     private static final String DB_USER = "root";
     private static final String DB_PASS = "IaFHSQzfymARUiHWrCKugcWyXGwbxHgP";
 
-    private static Connection conn;
+    public static Connection conn;
 
     static {
         try {
+            // ✅ Driver’ni qo‘lda yuklaymiz (muhim!)
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            // ✅ Ulanishni amalga oshiramiz
             conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
             System.out.println("✅ Database connected to Railway (MySQL)!");
-
-            createTablesIfNotExists(); // Jadval yo‘q bo‘lsa, yaratadi
-
+        } catch (ClassNotFoundException e) {
+            System.err.println("❌ MySQL driver topilmadi! Driver dependency qo‘shing: mysql-connector-j");
         } catch (SQLException e) {
             System.err.println("❌ Database ulanishda xatolik: " + e.getMessage());
-            e.printStackTrace(); // 👉 To‘liq stack trace chiqaradi
-        }
-    }
-
-    // 🔹 Agar jadval yo‘q bo‘lsa — yaratish
-    private static void createTablesIfNotExists() {
-        String createUsersTable = """
-                CREATE TABLE IF NOT EXISTS users (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    chat_id BIGINT UNIQUE NOT NULL,
-                    username VARCHAR(255),
-                    firstname VARCHAR(255),
-                    promo_used BOOLEAN DEFAULT FALSE
-                )
-                """;
-
-        String createRequestsTable = """
-                CREATE TABLE IF NOT EXISTS requests (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    chat_id BIGINT NOT NULL,
-                    service VARCHAR(255) NOT NULL,
-                    extra TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-                """;
-
-        try (Statement st = conn.createStatement()) {
-            st.executeUpdate(createUsersTable);
-            st.executeUpdate(createRequestsTable);
-            System.out.println("📦 Jadval(lar) tekshirildi va kerak bo‘lsa yaratildi!");
-        } catch (SQLException e) {
-            System.err.println("⚠️ createTablesIfNotExists() xatolik: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -73,11 +42,9 @@ public class Config {
             ps.executeUpdate();
         } catch (SQLException e) {
             System.err.println("⚠️ upsertUser() xatolik: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
-    // 🔹 Promo kod ishlatilganmi?
     public static boolean isPromoUsed(long chatId) {
         String sql = "SELECT promo_used FROM users WHERE chat_id=?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -87,12 +54,10 @@ public class Config {
             }
         } catch (SQLException e) {
             System.err.println("⚠️ isPromoUsed() xatolik: " + e.getMessage());
-            e.printStackTrace();
         }
         return false;
     }
 
-    // 🔹 Promo kodni o‘rnatish
     public static void setPromoUsed(long chatId, boolean used) {
         String sql = "UPDATE users SET promo_used=? WHERE chat_id=?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -101,11 +66,9 @@ public class Config {
             ps.executeUpdate();
         } catch (SQLException e) {
             System.err.println("⚠️ setPromoUsed() xatolik: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
-    // 🔹 So‘rov yaratish
     public static void createRequest(long chatId, String service, String extra) {
         String sql = "INSERT INTO requests (chat_id, service, extra) VALUES (?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -115,11 +78,9 @@ public class Config {
             ps.executeUpdate();
         } catch (SQLException e) {
             System.err.println("⚠️ createRequest() xatolik: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
-    // 🔹 Barcha so‘rovlarni olish
     public static List<String> listRequests() {
         List<String> list = new ArrayList<>();
         String sql = "SELECT id, chat_id, service, extra FROM requests ORDER BY id DESC";
@@ -136,12 +97,10 @@ public class Config {
             }
         } catch (SQLException e) {
             System.err.println("⚠️ listRequests() xatolik: " + e.getMessage());
-            e.printStackTrace();
         }
         return list;
     }
 
-    // 🔹 ID orqali so‘rovni o‘chirish
     public static boolean deleteRequestById(long id) {
         String sql = "DELETE FROM requests WHERE id=?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -149,12 +108,10 @@ public class Config {
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("⚠️ deleteRequestById() xatolik: " + e.getMessage());
-            e.printStackTrace();
         }
         return false;
     }
 
-    // 🔹 ChatId bo‘yicha barcha so‘rovlarni o‘chirish
     public static void deleteRequestsByChatId(long chatId) {
         String sql = "DELETE FROM requests WHERE chat_id=?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -162,7 +119,6 @@ public class Config {
             ps.executeUpdate();
         } catch (SQLException e) {
             System.err.println("⚠️ deleteRequestsByChatId() xatolik: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 }

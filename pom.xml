@@ -16,11 +16,11 @@
     </properties>
 
     <dependencies>
-        <!-- ✅ MariaDB (MySQL) -->
+        <!-- ✅ MySQL Connector (Railway uchun to‘g‘ri driver) -->
         <dependency>
-            <groupId>org.mariadb.jdbc</groupId>
-            <artifactId>mariadb-java-client</artifactId>
-            <version>3.3.3</version>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>9.1.0</version>
         </dependency>
 
         <!-- ✅ .env faylni o‘qish uchun -->
@@ -47,7 +47,7 @@
 
     <build>
         <plugins>
-            <!-- ✅ Telegram botni .jar sifatida to‘plash -->
+            <!-- ✅ Fat (shade) jar yaratish -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -61,7 +61,6 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <!-- ⚠️ Main class nomi aniq shu bo‘lishi kerak -->
                                     <mainClass>org.example.Main</mainClass>
                                 </transformer>
                             </transformers>
