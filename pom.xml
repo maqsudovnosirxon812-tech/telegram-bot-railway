@@ -30,11 +30,10 @@
             <version>3.0.0</version>
         </dependency>
 
-        <!-- ✅ Telegram Bot -->
         <dependency>
             <groupId>org.telegram</groupId>
             <artifactId>telegrambots</artifactId>
-            <version>6.5.0</version>
+            <version>6.8.0</version>
         </dependency>
 
         <!-- ✅ Log uchun -->

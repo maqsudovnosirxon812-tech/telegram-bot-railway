@@ -294,7 +294,7 @@ public class ServiceBot extends TelegramLongPollingBot {
     private ReplyKeyboardMarkup backKeyboard() {
         ReplyKeyboardMarkup kb = new ReplyKeyboardMarkup();
         kb.setResizeKeyboard(true);
-        kb.setKeyboard(List.of(List.of(new KeyboardButton(BACK_TO_MAIN))));
+        kb.setKeyboard(List.of((KeyboardRow) List.of(new KeyboardButton(BACK_TO_MAIN))));
         return kb;
     }
 
@@ -303,9 +303,9 @@ public class ServiceBot extends TelegramLongPollingBot {
         ReplyKeyboardMarkup kb = new ReplyKeyboardMarkup();
         kb.setResizeKeyboard(true);
         kb.setKeyboard(List.of(
-                List.of(new KeyboardButton("Konspekt yozish"), new KeyboardButton("Uyga vazifa")),
-                List.of(new KeyboardButton("Loyha ishlari"), new KeyboardButton("Slayd yasab berish")),
-                List.of(new KeyboardButton(BACK_TO_MAIN))
+                (KeyboardRow) List.of(new KeyboardButton("Konspekt yozish"), new KeyboardButton("Uyga vazifa")),
+                (KeyboardRow) List.of(new KeyboardButton("Loyha ishlari"), new KeyboardButton("Slayd yasab berish")),
+                (KeyboardRow) List.of(new KeyboardButton(BACK_TO_MAIN))
         ));
         sendTextWithKeyboard(chatId, text, kb);
     }
