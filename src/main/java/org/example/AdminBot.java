@@ -42,7 +42,6 @@ public class AdminBot extends TelegramLongPollingBot {
         String chatId = String.valueOf(update.getMessage().getChatId());
         String text = update.getMessage().getText();
 
-        // 🔹 Adminlikni tekshirish
         if (!isAdmin(chatId)) {
             sendText(chatId, "❌ Siz admin emassiz.");
             return;
@@ -102,7 +101,10 @@ public class AdminBot extends TelegramLongPollingBot {
                 String target = stateTargets.remove(chatId);
                 if (target != null) {
                     try {
-                        new ServiceBot().execute(new SendMessage(target, text));
+                        SendMessage msg = new SendMessage();
+                        msg.setChatId(target);
+                        msg.setText("📢 *Admindan xabar:*\n" + text);
+                        new ServiceBot().execute(msg);
                         sendText(chatId, "✅ Xabar yuborildi: " + target);
                     } catch (Exception e) {
                         sendText(chatId, "❌ Xabar yuborishda xatolik!");
@@ -136,7 +138,6 @@ public class AdminBot extends TelegramLongPollingBot {
         try { execute(new SendMessage(chatId, text)); } catch (Exception e) { e.printStackTrace(); }
     }
 
-    // 🔹 Endi barcha adminlarga yuboradi
     public void sendTextToAdmins(String text) {
         for (String adminId : ADMINS) {
             sendText(adminId, text);
