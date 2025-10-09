@@ -17,11 +17,15 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import java.util.*;
 
 public class ServiceBot extends TelegramLongPollingBot {
-    // --- O'zingiz kerak deb topgan token/usernameni shu yerda saqlang ---
-    private static final String BOT_TOKEN = "8495297601:AAF-h1qu1XugDGG6pYD_brlbv_FPTIxTZHs";
-    private static final String BOT_USERNAME = "edu_serve_bot";
+    // Token va usernameni environment variable orqali oling
+    private static final String BOT_TOKEN = System.getenv("SERVICE_BOT_TOKEN");
+    private static final String BOT_USERNAME = System.getenv("SERVICE_BOT_USERNAME");
+
     private static final String DEFAULT_PROMO = "SYNOPSIS_2026";
     private static final String BACK_TO_MAIN = "⬅ Bosh menuga qaytish";
+
+    // singleton instance (AdminBot kabi)
+    private static ServiceBot instance;
 
     // state maps
     private final Map<String, String> selectedService = new HashMap<>();
@@ -29,8 +33,16 @@ public class ServiceBot extends TelegramLongPollingBot {
     private final Map<String, Integer> pageCount = new HashMap<>();
     private final Map<String, Boolean> chattingWithAdmin = new HashMap<>();
 
+    public ServiceBot() {
+        instance = this;
+    }
+
+    public static ServiceBot getInstance() {
+        return instance;
+    }
+
     @Override
-    public String getBotUsername() { return BOT_USERNAME; }
+    public String getBotUsername() { return BOT_USERNAME != null ? BOT_USERNAME : "UNKNOWN_SERVICE_BOT"; }
 
     @Override
     public String getBotToken() { return BOT_TOKEN; }
@@ -240,22 +252,28 @@ public class ServiceBot extends TelegramLongPollingBot {
 
     // ==== INLINE MARKUP / SEND / EDIT ====
     private InlineKeyboardMarkup buildInlineMarkup(int current) {
-        InlineKeyboardButton minus = new InlineKeyboardButton("-2");
+        InlineKeyboardButton minus = new InlineKeyboardButton();
+        minus.setText("-2");
         minus.setCallbackData("dec");
 
-        InlineKeyboardButton plus = new InlineKeyboardButton("+2");
+        InlineKeyboardButton plus = new InlineKeyboardButton();
+        plus.setText("+2");
         plus.setCallbackData("inc");
 
-        InlineKeyboardButton confirmK = new InlineKeyboardButton("Tasdiqlash (Konspekt)");
+        InlineKeyboardButton confirmK = new InlineKeyboardButton();
+        confirmK.setText("Tasdiqlash (Konspekt)");
         confirmK.setCallbackData("confirm_konspekt");
 
-        InlineKeyboardButton confirmS = new InlineKeyboardButton("Tasdiqlash (Slayd)");
+        InlineKeyboardButton confirmS = new InlineKeyboardButton();
+        confirmS.setText("Tasdiqlash (Slayd)");
         confirmS.setCallbackData("confirm_slides");
 
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         rows.add(Arrays.asList(minus, plus));
         rows.add(Arrays.asList(confirmK, confirmS));
-        return new InlineKeyboardMarkup(rows);
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        markup.setKeyboard(rows);
+        return markup;
     }
 
     private void editInlineCount(String chatId, int messageId, int current) {
@@ -287,11 +305,23 @@ public class ServiceBot extends TelegramLongPollingBot {
 
     // ==== HELPERS ====
     public static void ishtugadiStatic(String chatId) {
-        try {
-            ServiceBot bot = new ServiceBot();
-            bot.execute(new SendMessage(chatId, "✅ So‘rovingiz yakunlandi. Ish tayyor!"));
-        } catch (Exception e) {
-            e.printStackTrace();
+        ServiceBot sb = ServiceBot.getInstance();
+        if (sb != null) {
+            try {
+                sb.execute(new SendMessage(chatId, "✅ So‘rovingiz yakunlandi. Ish tayyor!"));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            // Agar service bot ro'yxatdan o'tmagan bo'lsa, AdminBot orqali xabar yuborish mumkin
+            AdminBot ab = AdminBot.getInstance();
+            if (ab != null) {
+                try {
+                    ab.execute(new SendMessage(chatId, "✅ So‘rovingiz yakunlandi. Ish tayyor!"));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
