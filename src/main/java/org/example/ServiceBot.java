@@ -54,7 +54,7 @@ public class ServiceBot extends TelegramLongPollingBot {
                 }
                 String msgToAdmin = "📩 *Foydalanuvchidan xabar:*\n"
                         + "👤 Ism: " + from.getFirstName() + "\n"
-                        + "💬 ChatId: r" + chatId + "\n"
+                        + "💬 ChatId: " + chatId + "\n"
                         + "📝 Xabar: " + text;
                 AdminBot.notifyAdmin(msgToAdmin);
                 sendText(chatId, "✅ Xabaringiz adminga yuborildi.");
