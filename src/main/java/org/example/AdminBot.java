@@ -7,8 +7,8 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import java.util.*;
 
 public class AdminBot extends TelegramLongPollingBot {
-    private static final String BOT_TOKEN = "YOUR_ADMINBOT_TOKEN";
-    private static final String BOT_USERNAME = "YOUR_ADMINBOT_USERNAME";
+    private static final String BOT_TOKEN = "8295381933:AAFgcq71yiksMshiKw11JBc64qE1QAwtOE4";
+    private static final String BOT_USERNAME = "answer812_bot";
     private static final List<String> ADMINS = Arrays.asList("6448561095", "5150677380");
 
     private static final Map<String, AdminState> adminState = new HashMap<>();

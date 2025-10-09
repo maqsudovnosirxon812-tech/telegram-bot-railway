@@ -14,8 +14,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import java.util.*;
 
 public class ServiceBot extends TelegramLongPollingBot {
-    private static final String BOT_TOKEN = "YOUR_SERVICEBOT_TOKEN";
-    private static final String BOT_USERNAME = "YOUR_SERVICEBOT_USERNAME";
+    private static final String BOT_TOKEN = "8495297601:AAF-h1qu1XugDGG6pYD_brlbv_FPTIxTZHs";
+    private static final String BOT_USERNAME = "edu_serve_bot";
     private static final String DEFAULT_PROMO = "SYNOPSIS_2026";
     private static final String BACK_TO_MAIN = "⬅ Bosh menuga qaytish";
 
