@@ -326,4 +326,15 @@ public class ServiceBot extends TelegramLongPollingBot {
         sm.setReplyMarkup(kb);
         try { execute(sm); } catch (Exception e) { e.printStackTrace(); }
     }
+
+    // ==== ISH TUGADI ====
+    public static void ishtugadiStatic(String chatId) {
+        try {
+            ServiceBot bot = new ServiceBot();
+            bot.execute(new SendMessage(chatId, "✅ So‘rovingiz yakunlandi. Ish tayyor!"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
