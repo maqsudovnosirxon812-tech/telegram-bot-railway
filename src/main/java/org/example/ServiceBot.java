@@ -12,9 +12,8 @@ import java.util.*;
 
 public class ServiceBot extends TelegramLongPollingBot {
 
-    // ⚙️ Token va username to‘g‘ridan-to‘g‘ri kodda yoziladi
-    private static final String BOT_TOKEN = "8495297601:AAF-h1qu1XugDGG6pYD_brlbv_FPTIxTZHs";      // <-- bu yerga tokenni yoz
-    private static final String BOT_USERNAME = "edu_serve_bot"; // <-- bu yerga bot username’ni yoz
+    private static final String BOT_TOKEN = "8495297601:AAF-h1qu1XugDGG6pYD_brlbv_FPTIxTZHs";
+    private static final String BOT_USERNAME = "edu_serve_bot";
 
     private static final String DEFAULT_PROMO = "SYNOPSIS_2026";
     private static final String BACK_TO_MAIN = "⬅ Bosh menuga qaytish";
@@ -226,25 +225,28 @@ public class ServiceBot extends TelegramLongPollingBot {
         }
     }
 
-    private InlineKeyboardMarkup buildInlineMarkup(int current) {
+    private InlineKeyboardMarkup buildInlineMarkup(int current, boolean isSlide) {
         InlineKeyboardButton minus = new InlineKeyboardButton("-2");
         minus.setCallbackData("dec");
         InlineKeyboardButton plus = new InlineKeyboardButton("+2");
         plus.setCallbackData("inc");
-        InlineKeyboardButton confirmK = new InlineKeyboardButton("Tasdiqlash (Konspekt)");
-        confirmK.setCallbackData("confirm_konspekt");
-        InlineKeyboardButton confirmS = new InlineKeyboardButton("Tasdiqlash (Slayd)");
-        confirmS.setCallbackData("confirm_slides");
-        return new InlineKeyboardMarkup(List.of(List.of(minus, plus), List.of(confirmK, confirmS)));
+        InlineKeyboardButton confirm = new InlineKeyboardButton(isSlide ? "Tasdiqlash (Slayd)" : "Tasdiqlash (Konspekt)");
+        confirm.setCallbackData(isSlide ? "confirm_slides" : "confirm_konspekt");
+
+        List<InlineKeyboardButton> row1 = List.of(minus, plus);
+        List<InlineKeyboardButton> row2 = List.of(confirm);
+
+        return new InlineKeyboardMarkup(List.of(row1, row2));
     }
 
     private void editInlineCount(String chatId, int messageId, int current) {
         try {
+            boolean isSlide = selectedService.getOrDefault(chatId, "").equals("Slayd yasab berish");
             EditMessageText edit = new EditMessageText();
             edit.setChatId(chatId);
             edit.setMessageId(messageId);
-            edit.setText("📄 Betlar soni: " + current);
-            edit.setReplyMarkup(buildInlineMarkup(current));
+            edit.setText((isSlide ? "🎞 Slaydlar soni: " : "📄 Betlar soni: ") + current);
+            edit.setReplyMarkup(buildInlineMarkup(current, isSlide));
             execute(edit);
         } catch (Exception e) {
             e.printStackTrace();
@@ -254,14 +256,14 @@ public class ServiceBot extends TelegramLongPollingBot {
     private void sendKonspektInline(String chatId) {
         int current = pageCount.getOrDefault(chatId, 2);
         SendMessage sm = new SendMessage(chatId, "📘 Nechta bet kerak?");
-        sm.setReplyMarkup(buildInlineMarkup(current));
+        sm.setReplyMarkup(buildInlineMarkup(current, false));
         try { execute(sm); } catch (Exception e) { e.printStackTrace(); }
     }
 
     private void sendSlidesInline(String chatId, String topic) {
         int current = pageCount.getOrDefault(chatId, 2);
         SendMessage sm = new SendMessage(chatId, "🎞 Mavzu: " + topic + "\nNechta slayd kerak?");
-        sm.setReplyMarkup(buildInlineMarkup(current));
+        sm.setReplyMarkup(buildInlineMarkup(current, true));
         try { execute(sm); } catch (Exception e) { e.printStackTrace(); }
     }
 
@@ -294,7 +296,9 @@ public class ServiceBot extends TelegramLongPollingBot {
     private ReplyKeyboardMarkup backKeyboard() {
         ReplyKeyboardMarkup kb = new ReplyKeyboardMarkup();
         kb.setResizeKeyboard(true);
-        kb.setKeyboard(List.of((KeyboardRow) List.of(new KeyboardButton(BACK_TO_MAIN))));
+        KeyboardRow row = new KeyboardRow();
+        row.add(new KeyboardButton(BACK_TO_MAIN));
+        kb.setKeyboard(List.of(row));
         return kb;
     }
 
@@ -302,11 +306,19 @@ public class ServiceBot extends TelegramLongPollingBot {
         String text = "📋 Hizmatlar — tanlang:";
         ReplyKeyboardMarkup kb = new ReplyKeyboardMarkup();
         kb.setResizeKeyboard(true);
-        kb.setKeyboard(List.of(
-                (KeyboardRow) List.of(new KeyboardButton("Konspekt yozish"), new KeyboardButton("Uyga vazifa")),
-                (KeyboardRow) List.of(new KeyboardButton("Loyha ishlari"), new KeyboardButton("Slayd yasab berish")),
-                (KeyboardRow) List.of(new KeyboardButton(BACK_TO_MAIN))
-        ));
+
+        KeyboardRow r1 = new KeyboardRow();
+        r1.add(new KeyboardButton("Konspekt yozish"));
+        r1.add(new KeyboardButton("Uyga vazifa"));
+
+        KeyboardRow r2 = new KeyboardRow();
+        r2.add(new KeyboardButton("Loyha ishlari"));
+        r2.add(new KeyboardButton("Slayd yasab berish"));
+
+        KeyboardRow r3 = new KeyboardRow();
+        r3.add(new KeyboardButton(BACK_TO_MAIN));
+
+        kb.setKeyboard(List.of(r1, r2, r3));
         sendTextWithKeyboard(chatId, text, kb);
     }
 
@@ -327,14 +339,12 @@ public class ServiceBot extends TelegramLongPollingBot {
         try { execute(sm); } catch (Exception e) { e.printStackTrace(); }
     }
 
-    // ==== ISH TUGADI ====
     public static void ishtugadiStatic(String chatId) {
         try {
-            ServiceBot bot = new ServiceBot();
+            ServiceBot bot = ServiceBot.getInstance();
             bot.execute(new SendMessage(chatId, "✅ So‘rovingiz yakunlandi. Ish tayyor!"));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
 }
