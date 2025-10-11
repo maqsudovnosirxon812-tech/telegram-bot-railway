@@ -2,8 +2,8 @@ package org.example;
 
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.*;
@@ -60,7 +60,7 @@ public class ServiceBot extends TelegramLongPollingBot {
             User from = msg.getFrom();
             String username = (from.getUserName() != null ? "@" + from.getUserName() : from.getFirstName());
 
-            // Admin bilan muloqot rejimi
+            // 🔹 Agar foydalanuvchi admin bilan yozish rejimida bo‘lsa
             if (chattingWithAdmin.getOrDefault(chatId, false)) {
                 if (text.equalsIgnoreCase(BACK_TO_MAIN)) {
                     chattingWithAdmin.put(chatId, false);
@@ -77,65 +77,26 @@ public class ServiceBot extends TelegramLongPollingBot {
                 return;
             }
 
-            // Xizmat tanlangan bo‘lsa
-            if (selectedService.containsKey(chatId)) {
-                String svc = selectedService.get(chatId);
-                switch (svc) {
-                    case "Konspekt yozish" -> {
-                        if (!pageCount.containsKey(chatId)) {
-                            pageCount.put(chatId, 2);
-                            sendKonspektInline(chatId);
-                        } else {
-                            sendText(chatId, "📘 Betlar sonini inline tugmalar orqali belgilang yoki /start bosing.");
-                        }
-                        return;
-                    }
-                    case "Uyga vazifa" -> {
-                        if (!tempAnswers.containsKey(chatId)) {
-                            tempAnswers.put(chatId, text);
-                            sendText(chatId, "✍️ Endi mavzuni kiriting:");
-                        } else {
-                            String fan = tempAnswers.remove(chatId);
-                            String mavzu = text;
-                            String msgToAdmin = "📚 Uyga vazifa\n"
-                                    + "👤 Ism: " + from.getFirstName() + "\n"
-                                    + "🔗 Username: " + username + "\n"
-                                    + "💬 ChatId: " + chatId + "\n"
-                                    + "📘 Fan: " + fan + "\n"
-                                    + "🧾 Mavzu: " + mavzu;
-                            AdminBot.notifyAdmin(msgToAdmin);
-                            sendText(chatId, "✅ Uyga vazifa yuborildi. Adminga xabar berildi.");
-                            selectedService.remove(chatId);
-                        }
-                        return;
-                    }
-                    case "Loyha ishlari" -> {
-                        String msgToAdmin = "🧩 Loyha ishlari\n"
-                                + "👤 Ism: " + from.getFirstName() + "\n"
-                                + "🔗 Username: " + username + "\n"
-                                + "💬 ChatId: " + chatId + "\n"
-                                + "📄 Tavsif: " + text;
-                        AdminBot.notifyAdmin(msgToAdmin);
-                        sendText(chatId, "✅ Loyha ma’lumoti yuborildi.");
-                        selectedService.remove(chatId);
-                        return;
-                    }
-                    case "Slayd yasab berish" -> {
-                        if (!tempAnswers.containsKey(chatId)) {
-                            tempAnswers.put(chatId, text);
-                            pageCount.put(chatId, 2);
-                            sendSlidesInline(chatId, text);
-                        } else {
-                            sendText(chatId, "🎞 Slaydlar sonini inline tugmalar orqali belgilang yoki /start bosing.");
-                        }
-                        return;
-                    }
+            // 🔹 Deep-link bilan /start bosilganda ham ishlaydi
+            if (text.startsWith("/start")) {
+                String[] parts = text.split(" ", 2);
+                if (parts.length > 1) {
+                    String payload = parts[1];
+                    sendText(chatId, "🔑 Sizning promo yoki havola kodi: `" + payload + "`");
                 }
+                handleStart(chatId, from);
+                return;
             }
 
-            // Asosiy menyu
+            // 🔹 Tanlangan xizmatni qayta ishlash
+            if (selectedService.containsKey(chatId)) {
+                String svc = selectedService.get(chatId);
+                handleSelectedService(svc, chatId, text, from, username);
+                return;
+            }
+
+            // 🔹 Asosiy menyu buyruqlari
             switch (text) {
-                case "/start" -> handleStart(chatId, from);
                 case "Promo Code" -> sendText(chatId, "🔑 Iltimos, promo kodni kiriting:");
                 case "Hizmatlar" -> sendServicesMenu(chatId);
                 case "Profile" -> showProfile(chatId, from);
@@ -144,37 +105,65 @@ public class ServiceBot extends TelegramLongPollingBot {
                     sendTextWithKeyboard(chatId, "✍️ Xabaringizni yozing. Adminga yuboriladi.\n\n" + BACK_TO_MAIN, backKeyboard());
                 }
                 case BACK_TO_MAIN -> handleStart(chatId, from);
-                default -> {
-                    if (text.equalsIgnoreCase(DEFAULT_PROMO)) {
-                        sendText(chatId, "✅ Promo kod qabul qilindi!");
-                        AdminBot.notifyAdmin("📩 Promo ishlatildi!\nFoydalanuvchi: " + username);
-                    } else if (text.equalsIgnoreCase("Konspekt yozish")) {
-                        selectedService.put(chatId, "Konspekt yozish");
-                        pageCount.put(chatId, 2);
-                        sendText(chatId, "📘 Siz Konspekt yozish xizmatini tanladingiz.");
-                        sendKonspektInline(chatId);
-                    } else if (text.equalsIgnoreCase("Uyga vazifa")) {
-                        selectedService.put(chatId, "Uyga vazifa");
-                        tempAnswers.remove(chatId);
-                        sendText(chatId, "✍️ Qaysi fan uchun uyga vazifa kerak?");
-                    } else if (text.equalsIgnoreCase("Loyha ishlari")) {
-                        selectedService.put(chatId, "Loyha ishlari");
-                        sendText(chatId, "🧩 Loyha haqida qisqacha yozing.");
-                    } else if (text.equalsIgnoreCase("Slayd yasab berish")) {
-                        selectedService.put(chatId, "Slayd yasab berish");
-                        tempAnswers.remove(chatId);
-                        sendText(chatId, "📑 Qaysi mavzu uchun slayd kerak?");
-                    } else {
-                        sendText(chatId, "❌ Men bu buyruqni tushunmadim. /start bosing.");
-                    }
-                }
+                default -> handleCustomText(chatId, text, from, username);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // ==== CALLBACK HANDLER ====
+    // === FOYDALANUVCHI XIZMATNI TANLAGANDA ===
+    private void handleSelectedService(String svc, String chatId, String text, User from, String username) {
+        switch (svc) {
+            case "Konspekt yozish" -> {
+                if (!pageCount.containsKey(chatId)) {
+                    pageCount.put(chatId, 2);
+                    sendKonspektInline(chatId);
+                } else {
+                    sendText(chatId, "📘 Betlar sonini inline tugmalar orqali belgilang yoki /start bosing.");
+                }
+            }
+            case "Uyga vazifa" -> {
+                if (!tempAnswers.containsKey(chatId)) {
+                    tempAnswers.put(chatId, text);
+                    sendText(chatId, "✍️ Endi mavzuni kiriting:");
+                } else {
+                    String fan = tempAnswers.remove(chatId);
+                    String mavzu = text;
+                    String msgToAdmin = "📚 Uyga vazifa\n"
+                            + "👤 Ism: " + from.getFirstName() + "\n"
+                            + "🔗 Username: " + username + "\n"
+                            + "💬 ChatId: " + chatId + "\n"
+                            + "📘 Fan: " + fan + "\n"
+                            + "🧾 Mavzu: " + mavzu;
+                    AdminBot.notifyAdmin(msgToAdmin);
+                    sendText(chatId, "✅ Uyga vazifa yuborildi. Adminga xabar berildi.");
+                    selectedService.remove(chatId);
+                }
+            }
+            case "Loyha ishlari" -> {
+                String msgToAdmin = "🧩 Loyha ishlari\n"
+                        + "👤 Ism: " + from.getFirstName() + "\n"
+                        + "🔗 Username: " + username + "\n"
+                        + "💬 ChatId: " + chatId + "\n"
+                        + "📄 Tavsif: " + text;
+                AdminBot.notifyAdmin(msgToAdmin);
+                sendText(chatId, "✅ Loyha ma’lumoti yuborildi.");
+                selectedService.remove(chatId);
+            }
+            case "Slayd yasab berish" -> {
+                if (!tempAnswers.containsKey(chatId)) {
+                    tempAnswers.put(chatId, text);
+                    pageCount.put(chatId, 2);
+                    sendSlidesInline(chatId, text);
+                } else {
+                    sendText(chatId, "🎞 Slaydlar sonini inline tugmalar orqali belgilang yoki /start bosing.");
+                }
+            }
+        }
+    }
+
+    // === CALLBACK (INLINE) BOSILGANDA ===
     private void handleCallback(CallbackQuery cq) {
         try {
             String data = cq.getData();
@@ -185,36 +174,28 @@ public class ServiceBot extends TelegramLongPollingBot {
             String firstName = user.getFirstName();
             String username = (user.getUserName() != null ? "@" + user.getUserName() : "—");
 
-            if (data.equals("inc")) {
-                current += 2;
-                pageCount.put(chatId, current);
-                editInlineCount(chatId, messageId, current);
-            } else if (data.equals("dec")) {
-                if (current > 2) current -= 2;
-                pageCount.put(chatId, current);
-                editInlineCount(chatId, messageId, current);
-            } else if (data.equals("confirm_konspekt")) {
-                int pages = pageCount.getOrDefault(chatId, 2);
-                String msgToAdmin = "📘 *Konspekt so‘rovi*\n"
-                        + "👤 Ism: " + firstName + "\n"
-                        + "🔗 Username: " + username + "\n"
-                        + "💬 ChatId: " + chatId + "\n"
-                        + "📄 Betlar: " + pages;
-                AdminBot.notifyAdmin(msgToAdmin);
+            switch (data) {
+                case "inc" -> current += 2;
+                case "dec" -> current = Math.max(2, current - 2);
+            }
+            pageCount.put(chatId, current);
+
+            if (data.equals("confirm_konspekt")) {
+                AdminBot.notifyAdmin("📘 *Konspekt so‘rovi*\n👤 " + firstName +
+                        "\n🔗 " + username + "\n💬 ChatId: " + chatId +
+                        "\n📄 Betlar: " + current);
                 sendText(chatId, "✅ Konspekt uchun so‘rovingiz yuborildi!");
                 clearState(chatId);
             } else if (data.equals("confirm_slides")) {
                 String topic = tempAnswers.getOrDefault(chatId, "Mavzu");
-                int slides = pageCount.getOrDefault(chatId, 2);
-                String msgToAdmin = "🎞 *Slayd so‘rovi*\n"
-                        + "👤 Ism: " + firstName + "\n"
-                        + "🔗 Username: " + username + "\n"
-                        + "💬 ChatId: " + chatId + "\n"
-                        + "🧾 Mavzu: " + topic + "\n"
-                        + "📊 Slaydlar: " + slides;
-                AdminBot.notifyAdmin(msgToAdmin);
+                AdminBot.notifyAdmin("🎞 *Slayd so‘rovi*\n👤 " + firstName +
+                        "\n🔗 " + username + "\n💬 ChatId: " + chatId +
+                        "\n🧾 Mavzu: " + topic +
+                        "\n📊 Slaydlar: " + current);
                 sendText(chatId, "✅ Slayd so‘rovingiz yuborildi!");
                 clearState(chatId);
+            } else {
+                editInlineCount(chatId, messageId, current);
             }
 
             AnswerCallbackQuery ack = new AnswerCallbackQuery();
@@ -225,6 +206,7 @@ public class ServiceBot extends TelegramLongPollingBot {
         }
     }
 
+    // === YORDAMCHI METODLAR ===
     private InlineKeyboardMarkup buildInlineMarkup(int current, boolean isSlide) {
         InlineKeyboardButton minus = new InlineKeyboardButton("-2");
         minus.setCallbackData("dec");
@@ -232,16 +214,15 @@ public class ServiceBot extends TelegramLongPollingBot {
         plus.setCallbackData("inc");
         InlineKeyboardButton confirm = new InlineKeyboardButton(isSlide ? "Tasdiqlash (Slayd)" : "Tasdiqlash (Konspekt)");
         confirm.setCallbackData(isSlide ? "confirm_slides" : "confirm_konspekt");
-
-        List<InlineKeyboardButton> row1 = List.of(minus, plus);
-        List<InlineKeyboardButton> row2 = List.of(confirm);
-
-        return new InlineKeyboardMarkup(List.of(row1, row2));
+        return new InlineKeyboardMarkup(List.of(
+                List.of(minus, plus),
+                List.of(confirm)
+        ));
     }
 
     private void editInlineCount(String chatId, int messageId, int current) {
         try {
-            boolean isSlide = selectedService.getOrDefault(chatId, "").equals("Slayd yasab berish");
+            boolean isSlide = "Slayd yasab berish".equals(selectedService.getOrDefault(chatId, ""));
             EditMessageText edit = new EditMessageText();
             edit.setChatId(chatId);
             edit.setMessageId(messageId);
@@ -267,11 +248,28 @@ public class ServiceBot extends TelegramLongPollingBot {
         try { execute(sm); } catch (Exception e) { e.printStackTrace(); }
     }
 
-    private void clearState(String chatId) {
-        selectedService.remove(chatId);
-        tempAnswers.remove(chatId);
-        pageCount.remove(chatId);
-        chattingWithAdmin.remove(chatId);
+    private void handleCustomText(String chatId, String text, User from, String username) {
+        if (text.equalsIgnoreCase(DEFAULT_PROMO)) {
+            sendText(chatId, "✅ Promo kod qabul qilindi!");
+            AdminBot.notifyAdmin("📩 Promo ishlatildi!\nFoydalanuvchi: " + username);
+        } else if (text.equalsIgnoreCase("Konspekt yozish")) {
+            selectedService.put(chatId, "Konspekt yozish");
+            pageCount.put(chatId, 2);
+            sendKonspektInline(chatId);
+        } else if (text.equalsIgnoreCase("Uyga vazifa")) {
+            selectedService.put(chatId, "Uyga vazifa");
+            tempAnswers.remove(chatId);
+            sendText(chatId, "✍️ Qaysi fan uchun uyga vazifa kerak?");
+        } else if (text.equalsIgnoreCase("Loyha ishlari")) {
+            selectedService.put(chatId, "Loyha ishlari");
+            sendText(chatId, "🧩 Loyha haqida qisqacha yozing.");
+        } else if (text.equalsIgnoreCase("Slayd yasab berish")) {
+            selectedService.put(chatId, "Slayd yasab berish");
+            tempAnswers.remove(chatId);
+            sendText(chatId, "📑 Qaysi mavzu uchun slayd kerak?");
+        } else {
+            sendText(chatId, "❌ Men bu buyruqni tushunmadim. /start bosing.");
+        }
     }
 
     private void handleStart(String chatId, User from) {
@@ -284,11 +282,11 @@ public class ServiceBot extends TelegramLongPollingBot {
         ReplyKeyboardMarkup kb = new ReplyKeyboardMarkup();
         kb.setResizeKeyboard(true);
         KeyboardRow r1 = new KeyboardRow();
-        r1.add(new KeyboardButton("Promo Code"));
-        r1.add(new KeyboardButton("Hizmatlar"));
+        r1.add("Promo Code");
+        r1.add("Hizmatlar");
         KeyboardRow r2 = new KeyboardRow();
-        r2.add(new KeyboardButton("Profile"));
-        r2.add(new KeyboardButton("📩 Adminga yozish"));
+        r2.add("Profile");
+        r2.add("📩 Adminga yozish");
         kb.setKeyboard(List.of(r1, r2));
         return kb;
     }
@@ -296,37 +294,33 @@ public class ServiceBot extends TelegramLongPollingBot {
     private ReplyKeyboardMarkup backKeyboard() {
         ReplyKeyboardMarkup kb = new ReplyKeyboardMarkup();
         kb.setResizeKeyboard(true);
-        KeyboardRow row = new KeyboardRow();
-        row.add(new KeyboardButton(BACK_TO_MAIN));
-        kb.setKeyboard(List.of(row));
+        kb.setKeyboard(List.of(new KeyboardRow(List.of(new KeyboardButton(BACK_TO_MAIN)))));
         return kb;
     }
 
     private void sendServicesMenu(String chatId) {
-        String text = "📋 Hizmatlar — tanlang:";
         ReplyKeyboardMarkup kb = new ReplyKeyboardMarkup();
         kb.setResizeKeyboard(true);
-
-        KeyboardRow r1 = new KeyboardRow();
-        r1.add(new KeyboardButton("Konspekt yozish"));
-        r1.add(new KeyboardButton("Uyga vazifa"));
-
-        KeyboardRow r2 = new KeyboardRow();
-        r2.add(new KeyboardButton("Loyha ishlari"));
-        r2.add(new KeyboardButton("Slayd yasab berish"));
-
-        KeyboardRow r3 = new KeyboardRow();
-        r3.add(new KeyboardButton(BACK_TO_MAIN));
-
-        kb.setKeyboard(List.of(r1, r2, r3));
-        sendTextWithKeyboard(chatId, text, kb);
+        kb.setKeyboard(List.of(
+                new KeyboardRow(List.of(new KeyboardButton("Konspekt yozish"), new KeyboardButton("Uyga vazifa"))),
+                new KeyboardRow(List.of(new KeyboardButton("Loyha ishlari"), new KeyboardButton("Slayd yasab berish"))),
+                new KeyboardRow(List.of(new KeyboardButton(BACK_TO_MAIN)))
+        ));
+        sendTextWithKeyboard(chatId, "📋 Hizmatlar — tanlang:", kb);
     }
 
     private void showProfile(String chatId, User from) {
         String text = "👤 Profil\nIsm: " + from.getFirstName()
                 + "\nUsername: " + (from.getUserName() == null ? "-" : "@" + from.getUserName())
-                + "\nPromo: " + (false ? "Bor" : "Yo‘q");
+                + "\nPromo: Yo‘q";
         sendText(chatId, text);
+    }
+
+    private void clearState(String chatId) {
+        selectedService.remove(chatId);
+        tempAnswers.remove(chatId);
+        pageCount.remove(chatId);
+        chattingWithAdmin.remove(chatId);
     }
 
     protected void sendText(String chatId, String text) {
