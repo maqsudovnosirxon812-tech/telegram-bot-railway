@@ -282,6 +282,7 @@ public class ServiceBot extends TelegramLongPollingBot {
         String uname = (from.getUserName() != null) ? "@" + from.getUserName() : from.getFirstName();
         String greeting = "Assalomu alaykum " + uname + "!\nQanday yordam kerak?";
         sendTextWithKeyboard(chatId, greeting, mainKeyboard());
+        sendSticker(chatId,"CAACAgIAAxkBAlv57mjuaNqQ2MmREIR_8i5SYGa1A1gPAAK9KAACkpY5SgdtkeYQRa78NgQ");
     }
 
     private void sendSticker(String chatId, String stickerId) {
