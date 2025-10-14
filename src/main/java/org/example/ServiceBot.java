@@ -139,6 +139,7 @@ public class ServiceBot extends TelegramLongPollingBot {
                             + "🧾 Mavzu: " + mavzu;
                     AdminBot.notifyAdmin(msgToAdmin);
                     sendText(chatId, "✅ Uyga vazifa yuborildi. Adminga xabar berildi.");
+                    sendSticker(chatId,"CAACAgIAAxkBAlv5Y2juaAreYOARrIhQhvDqvXBtbGxeAAIdKwACj7I4SsXXLW8H8BImNgQ");
                     selectedService.remove(chatId);
                 }
             }
@@ -150,6 +151,7 @@ public class ServiceBot extends TelegramLongPollingBot {
                         + "📄 Tavsif: " + text;
                 AdminBot.notifyAdmin(msgToAdmin);
                 sendText(chatId, "✅ Loyha ma’lumoti yuborildi.");
+                sendSticker(chatId,"CAACAgIAAxkBAlv5Y2juaAreYOARrIhQhvDqvXBtbGxeAAIdKwACj7I4SsXXLW8H8BImNgQ");
                 selectedService.remove(chatId);
             }
             case "Slayd yasab berish" -> {
@@ -186,6 +188,7 @@ public class ServiceBot extends TelegramLongPollingBot {
                         "\n🔗 " + username + "\n💬 ChatId: " + chatId +
                         "\n📄 Betlar: " + current);
                 sendText(chatId, "✅ Konspekt uchun so‘rovingiz yuborildi!");
+                sendSticker(chatId,"CAACAgIAAxkBAlv5Y2juaAreYOARrIhQhvDqvXBtbGxeAAIdKwACj7I4SsXXLW8H8BImNgQ");
                 clearState(chatId);
             } else if (data.equals("confirm_slides")) {
                 String topic = tempAnswers.getOrDefault(chatId, "Mavzu");
@@ -194,6 +197,7 @@ public class ServiceBot extends TelegramLongPollingBot {
                         "\n🧾 Mavzu: " + topic +
                         "\n📊 Slaydlar: " + current);
                 sendText(chatId, "✅ Slayd so‘rovingiz yuborildi!");
+                sendSticker(chatId,"CAACAgIAAxkBAlv5Y2juaAreYOARrIhQhvDqvXBtbGxeAAIdKwACj7I4SsXXLW8H8BImNgQ");
                 clearState(chatId);
             } else {
                 editInlineCount(chatId, messageId, current);
