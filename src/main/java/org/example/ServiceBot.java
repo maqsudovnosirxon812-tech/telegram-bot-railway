@@ -3,12 +3,14 @@ package org.example;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.*;
 
+import java.io.InputStream;
 import java.util.*;
 
 public class ServiceBot extends TelegramLongPollingBot {
@@ -98,7 +100,12 @@ public class ServiceBot extends TelegramLongPollingBot {
 
             // 🔹 Asosiy menyu buyruqlari
             switch (text) {
-                case "Promo Code" -> sendText(chatId, "🔑 Iltimos, promo kodni kiriting:");
+                case "Promo Code" ->{
+                    sendPhoto(chatId,"images/download.png","");
+                    sendText(chatId, "🔑 Iltimos, promo " +
+                        "kodni " +
+                        "kiriting:");
+                }
                 case "Hizmatlar" -> sendServicesMenu(chatId);
                 case "Profile" -> showProfile(chatId, from);
                 case "📩 Adminga yozish" -> {
@@ -139,7 +146,6 @@ public class ServiceBot extends TelegramLongPollingBot {
                             + "🧾 Mavzu: " + mavzu;
                     AdminBot.notifyAdmin(msgToAdmin);
                     sendText(chatId, "✅ Uyga vazifa yuborildi. Adminga xabar berildi.");
-                    sendSticker(chatId,"CAACAgIAAxkBAlv5Y2juaAreYOARrIhQhvDqvXBtbGxeAAIdKwACj7I4SsXXLW8H8BImNgQ");
                     selectedService.remove(chatId);
                 }
             }
@@ -151,7 +157,6 @@ public class ServiceBot extends TelegramLongPollingBot {
                         + "📄 Tavsif: " + text;
                 AdminBot.notifyAdmin(msgToAdmin);
                 sendText(chatId, "✅ Loyha ma’lumoti yuborildi.");
-                sendSticker(chatId,"CAACAgIAAxkBAlv5Y2juaAreYOARrIhQhvDqvXBtbGxeAAIdKwACj7I4SsXXLW8H8BImNgQ");
                 selectedService.remove(chatId);
             }
             case "Slayd yasab berish" -> {
@@ -188,7 +193,6 @@ public class ServiceBot extends TelegramLongPollingBot {
                         "\n🔗 " + username + "\n💬 ChatId: " + chatId +
                         "\n📄 Betlar: " + current);
                 sendText(chatId, "✅ Konspekt uchun so‘rovingiz yuborildi!");
-                sendSticker(chatId,"CAACAgIAAxkBAlv5Y2juaAreYOARrIhQhvDqvXBtbGxeAAIdKwACj7I4SsXXLW8H8BImNgQ");
                 clearState(chatId);
             } else if (data.equals("confirm_slides")) {
                 String topic = tempAnswers.getOrDefault(chatId, "Mavzu");
@@ -197,7 +201,6 @@ public class ServiceBot extends TelegramLongPollingBot {
                         "\n🧾 Mavzu: " + topic +
                         "\n📊 Slaydlar: " + current);
                 sendText(chatId, "✅ Slayd so‘rovingiz yuborildi!");
-                sendSticker(chatId,"CAACAgIAAxkBAlv5Y2juaAreYOARrIhQhvDqvXBtbGxeAAIdKwACj7I4SsXXLW8H8BImNgQ");
                 clearState(chatId);
             } else {
                 editInlineCount(chatId, messageId, current);
@@ -240,6 +243,7 @@ public class ServiceBot extends TelegramLongPollingBot {
     }
 
     private void sendKonspektInline(String chatId) {
+        sendPhoto(chatId,"images/botga1.jpeg","");
         int current = pageCount.getOrDefault(chatId, 2);
         SendMessage sm = new SendMessage(chatId, "📘 Nechta bet kerak?");
         sm.setReplyMarkup(buildInlineMarkup(current, false));
@@ -247,6 +251,7 @@ public class ServiceBot extends TelegramLongPollingBot {
     }
 
     private void sendSlidesInline(String chatId, String topic) {
+        sendPhoto(chatId,"images/slaydYasash.jpeg","");
         int current = pageCount.getOrDefault(chatId, 2);
         SendMessage sm = new SendMessage(chatId, "🎞 Mavzu: " + topic + "\nNechta slayd kerak?");
         sm.setReplyMarkup(buildInlineMarkup(current, true));
@@ -282,7 +287,6 @@ public class ServiceBot extends TelegramLongPollingBot {
         String uname = (from.getUserName() != null) ? "@" + from.getUserName() : from.getFirstName();
         String greeting = "Assalomu alaykum " + uname + "!\nQanday yordam kerak?";
         sendTextWithKeyboard(chatId, greeting, mainKeyboard());
-        sendSticker(chatId,"CAACAgIAAxkBAlv57mjuaNqQ2MmREIR_8i5SYGa1A1gPAAK9KAACkpY5SgdtkeYQRa78NgQ");
     }
 
     private void sendSticker(String chatId, String stickerId) {
@@ -351,6 +355,32 @@ public class ServiceBot extends TelegramLongPollingBot {
         SendMessage sm = new SendMessage(chatId, text);
         sm.setReplyMarkup(kb);
         try { execute(sm); } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    private void sendPhoto(String chatId, String resourcePath, String caption) {
+        try {
+            // resources ichidagi faylni oqish
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream(resourcePath);
+            if (inputStream == null) {
+                sendText(chatId, "❌ Rasm topilmadi: " + resourcePath);
+                return;
+            }
+
+            InputFile photo = new InputFile(inputStream, "image.jpg");
+
+            SendPhoto sendPhoto = new SendPhoto();
+            sendPhoto.setChatId(chatId);
+            sendPhoto.setPhoto(photo);
+
+            if (caption != null && !caption.isEmpty()) {
+                sendPhoto.setCaption(caption);
+            }
+
+            execute(sendPhoto);
+        } catch (Exception e) {
+            e.printStackTrace();
+            sendText(chatId, "⚠️ Rasm yuborishda xatolik yuz berdi!");
+        }
     }
 
     public static void ishtugadiStatic(String chatId) {
