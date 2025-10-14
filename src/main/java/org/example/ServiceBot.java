@@ -3,6 +3,7 @@ package org.example;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.*;
@@ -273,10 +274,23 @@ public class ServiceBot extends TelegramLongPollingBot {
     }
 
     private void handleStart(String chatId, User from) {
+        sendSticker(chatId,"AAMCAgADGQECW_e8aO5lug7fnX3n9Zfp3eQpcL7PEKcAAqshAAKS8hhLWlqaAAHBY9VQAQAHbQADNgQ");
         String uname = (from.getUserName() != null) ? "@" + from.getUserName() : from.getFirstName();
         String greeting = "Assalomu alaykum " + uname + "!\nQanday yordam kerak?";
         sendTextWithKeyboard(chatId, greeting, mainKeyboard());
     }
+
+    private void sendSticker(String chatId, String stickerId) {
+        try {
+            SendSticker sticker = new SendSticker();
+            sticker.setChatId(chatId);
+            sticker.setSticker(new InputFile(stickerId));
+            execute(sticker);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private ReplyKeyboardMarkup mainKeyboard() {
         ReplyKeyboardMarkup kb = new ReplyKeyboardMarkup();
@@ -322,6 +336,7 @@ public class ServiceBot extends TelegramLongPollingBot {
         pageCount.remove(chatId);
         chattingWithAdmin.remove(chatId);
     }
+
 
     protected void sendText(String chatId, String text) {
         try { execute(new SendMessage(chatId, text)); } catch (Exception e) { e.printStackTrace(); }
