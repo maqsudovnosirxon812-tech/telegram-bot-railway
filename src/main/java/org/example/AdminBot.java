@@ -3,21 +3,18 @@ package org.example;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.Message;
 
 import java.util.*;
 
 public class AdminBot extends TelegramLongPollingBot {
-    // Token va username — siz berganini saqladim
+    // ⚙️ Token va username to‘g‘ridan-to‘g‘ri kod ichida
     private static final String BOT_TOKEN = "8295381933:AAFgcq71yiksMshiKw11JBc64qE1QAwtOE4";
     private static final String BOT_USERNAME = "answer812_bot";
 
-    // Adminlar ro'yxati (chatId string formatida)
+    // 👑 Adminlar ro‘yxati
     private static final List<String> ADMINS = List.of("6448561095", "5150677380");
 
     private static AdminBot instance;
-
-    // oddiy admin sessiya (agar kerak bo'lsa kengaytirish mumkin)
     private final Map<String, AdminSession> sessions = new HashMap<>();
 
     private enum AdminState { IDLE, TYPING_TARGET, TYPING_TEXT, ANSWERING }
@@ -27,11 +24,13 @@ public class AdminBot extends TelegramLongPollingBot {
         String target = null;
     }
 
-    public AdminBot() { instance = this; }
+    public AdminBot() {
+        instance = this;
+    }
 
-    public static AdminBot getInstance() { return instance; }
-
-    public static List<String> getAdmins() { return ADMINS; }
+    public static AdminBot getInstance() {
+        return instance;
+    }
 
     @Override
     public String getBotUsername() { return BOT_USERNAME; }
@@ -39,54 +38,64 @@ public class AdminBot extends TelegramLongPollingBot {
     @Override
     public String getBotToken() { return BOT_TOKEN; }
 
-    private boolean isAdmin(String chatId) { return ADMINS.contains(chatId); }
+    private boolean isAdmin(String chatId) {
+        return ADMINS.contains(chatId);
+    }
 
     @Override
     public void onUpdateReceived(Update update) {
-        try {
-            if (!update.hasMessage()) return;
-            Message message = update.getMessage();
-            String chatId = String.valueOf(message.getChatId());
+        if (!update.hasMessage() || !update.getMessage().hasText()) return;
 
-            // Agar admin bo'lmasa — xabar qaytarish
-            if (!isAdmin(chatId)) {
-                sendText(chatId, "❌ Siz admin emassiz.");
-                return;
+        String chatId = String.valueOf(update.getMessage().getChatId());
+        String text = update.getMessage().getText();
+
+        if (!isAdmin(chatId)) {
+            sendText(chatId, "❌ Siz admin emassiz.");
+            return;
+        }
+
+        AdminSession session = sessions.computeIfAbsent(chatId, k -> new AdminSession());
+
+        switch (text) {
+            case "/start" -> {
+                sendText(chatId, """
+                        🛠 <b>Admin menyusi:</b>
+                        /show — barcha so‘rovlarni ko‘rish
+                        /type — foydalanuvchiga xabar yuborish
+                        /answered — so‘rovni yakunlash
+                        """);
+                session.state = AdminState.IDLE;
             }
 
-            // Adminga foydalanuvchilardan forward qilingan fayllar ham yetib keladi
-            if (message.hasDocument() || message.hasPhoto() || message.hasVideo() || message.hasAudio() || message.hasVoice() || message.hasSticker()) {
-                // bu yerda admin faylni ko'rib, kerak bo'lsa foydalanuvchiga javob yozishi mumkin
-                sendText(chatId, "📎 Fayl qabul qilindi. Agar kerak bo'lsa /type orqali foydalanuvchiga javob yuboring yoki /answered bilan so'rovni yakunlang.");
-                return;
+            case "/show" -> {
+                List<String> rows = Config.listRequests();
+                if (rows.isEmpty()) {
+                    sendText(chatId, "📭 So‘rovlar mavjud emas.");
+                } else {
+                    StringBuilder sb = new StringBuilder();
+                    for (String r : rows) {
+                        if (sb.length() + r.length() > 3500) {
+                            sendText(chatId, sb.toString());
+                            sb.setLength(0);
+                        }
+                        sb.append(r).append("\n\n");
+                    }
+                    if (sb.length() > 0) sendText(chatId, sb.toString());
+                }
+                session.state = AdminState.IDLE;
             }
 
-            if (!message.hasText()) return;
-            String text = message.getText();
-            AdminSession session = sessions.computeIfAbsent(chatId, k -> new AdminSession());
-
-            switch (text) {
-                case "/start" -> {
-                    sendText(chatId, """
-                            🛠 <b>Admin menyusi:</b>
-                            /show — (NOT IMPLEMENTED) barcha so‘rovlar ro'yxati
-                            /type — foydalanuvchiga xabar yuborish
-                            /answered — so‘rovni yakunlash (ChatId ni kiriting)
-                            """);
-                    session.state = AdminState.IDLE;
-                }
-                case "/type" -> {
-                    session.state = AdminState.TYPING_TARGET;
-                    sendText(chatId, "✍️ Foydalanuvchi chatId’sini kiriting (masalan: 123456789):");
-                }
-                case "/answered" -> {
-                    session.state = AdminState.ANSWERING;
-                    sendText(chatId, "✍️ ChatId kiriting (so'rov tugatish uchun):");
-                }
-                default -> handleText(chatId, text, session);
+            case "/type" -> {
+                session.state = AdminState.TYPING_TARGET;
+                sendText(chatId, "✍️ Foydalanuvchi chatId’sini kiriting (masalan: <code>123456789</code>)");
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+
+            case "/answered" -> {
+                session.state = AdminState.ANSWERING;
+                sendText(chatId, "✍️ ChatId yoki so‘rov ID kiriting:");
+            }
+
+            default -> handleText(chatId, text, session);
         }
     }
 
@@ -97,10 +106,10 @@ public class AdminBot extends TelegramLongPollingBot {
                 session.state = AdminState.TYPING_TEXT;
                 sendText(chatId, "✍️ Endi yuboriladigan matnni kiriting:");
             }
+
             case TYPING_TEXT -> {
                 if (session.target != null) {
                     try {
-                        // Admindan kelgan xabarni foydalanuvchiga yuboramiz (ServiceBot yordamida)
                         SendMessage msg = new SendMessage(session.target, "📢 <b>Admin javobi:</b>\n" + text);
                         msg.enableHtml(true);
                         new ServiceBot().execute(msg);
@@ -112,28 +121,37 @@ public class AdminBot extends TelegramLongPollingBot {
                 session.state = AdminState.IDLE;
                 session.target = null;
             }
+
             case ANSWERING -> {
-                // /answered keyin admin ChatId kiritsa — bot foydalanuvchiga yakunlangan xabar yuboradi
-                try {
+                if (text.matches("\\d+")) {
                     long id = Long.parseLong(text);
-                    ServiceBot.ishtugadiStatic(String.valueOf(id));
-                    sendText(chatId, "☑️ So‘rov yakunlandi (ChatId=" + id + ")");
-                } catch (NumberFormatException e) {
+                    boolean deleted = Config.deleteRequestById(id);
+                    if (deleted) {
+                        sendText(chatId, "☑️ Request ID=" + id + " o‘chirildi.");
+                        ServiceBot.ishtugadiStatic(String.valueOf(id));
+                    } else {
+                        Config.deleteRequestsByChatId(id);
+                        ServiceBot.ishtugadiStatic(String.valueOf(id));
+                        sendText(chatId, "☑️ ChatId=" + id + " bo‘yicha so‘rovlar o‘chirildi.");
+                    }
+                } else {
                     sendText(chatId, "⚠️ Faqat raqam kiriting!");
                 }
                 session.state = AdminState.IDLE;
             }
+
             default -> sendText(chatId, "ℹ️ Noma’lum buyruq. /show, /type yoki /answered dan foydalaning.");
         }
     }
 
-    // Adminlarga xabar yuborish uchun statik yordamchi
     public static void notifyAdmin(String text) {
         if (instance != null) instance.sendTextToAdmins(text);
     }
 
     public void sendTextToAdmins(String text) {
-        for (String adminId : ADMINS) sendText(adminId, text);
+        for (String adminId : ADMINS) {
+            sendText(adminId, text);
+        }
     }
 
     private void sendText(String chatId, String text) {
